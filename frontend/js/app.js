@@ -30,7 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initIcons() {
   if (window.lucide) {
-    window.lucide.createIcons();
+    try {
+      window.lucide.createIcons();
+    } catch (e) {
+      console.warn('Lucide icon rendering warning:', e);
+    }
   }
 }
 
@@ -41,14 +45,18 @@ function initSidebarNavigation() {
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       const navTarget = item.getAttribute('data-nav');
-      switchView(navTarget);
+      if (navTarget) switchView(navTarget);
     });
   });
 
-  // Action links inside cards
-  document.getElementById('btn-view-full-report').addEventListener('click', () => switchView('scan'));
-  document.getElementById('btn-view-all-sources').addEventListener('click', () => switchView('intel'));
-  document.getElementById('btn-view-all-history').addEventListener('click', () => switchView('history'));
+  const btnFullReport = document.getElementById('btn-view-full-report');
+  if (btnFullReport) btnFullReport.addEventListener('click', () => switchView('scan'));
+
+  const btnAllSources = document.getElementById('btn-view-all-sources');
+  if (btnAllSources) btnAllSources.addEventListener('click', () => switchView('intel'));
+
+  const btnAllHistory = document.getElementById('btn-view-all-history');
+  if (btnAllHistory) btnAllHistory.addEventListener('click', () => switchView('history'));
 }
 
 function switchView(viewName) {
@@ -98,70 +106,83 @@ function switchView(viewName) {
 function initScanForms() {
   const dashboardForm = document.getElementById('dashboard-scan-form');
   const dashboardInput = document.getElementById('dashboard-ioc-input');
-  const btnDashboardScan = document.getElementById('btn-dashboard-scan');
-
   const topSearchBtn = document.getElementById('top-search-btn');
   const topSearchInput = document.getElementById('top-ioc-search');
 
-  // Main Dashboard Form
-  dashboardForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const indicator = dashboardInput.value.trim();
-    if (!indicator) return;
-    executeScan(indicator);
-  });
+  if (dashboardForm && dashboardInput) {
+    dashboardForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const indicator = dashboardInput.value.trim();
+      if (!indicator) return;
+      executeScan(indicator);
+    });
+  }
 
-  // Top Search Bar
-  topSearchBtn.addEventListener('click', () => {
-    const indicator = topSearchInput.value.trim();
-    if (!indicator) return;
-    executeScan(indicator);
-  });
-
-  topSearchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+  if (topSearchBtn && topSearchInput) {
+    topSearchBtn.addEventListener('click', () => {
       const indicator = topSearchInput.value.trim();
       if (!indicator) return;
       executeScan(indicator);
-    }
-  });
-
-  // Paste from clipboard helper
-  document.getElementById('btn-input-paste').addEventListener('click', async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) {
-        dashboardInput.value = text;
-        showToast('Pasted from clipboard', 'success');
-      }
-    } catch (err) {
-      showToast('Clipboard permission needed', 'error');
-    }
-  });
-
-  // Upload trigger inside input bar
-  document.getElementById('btn-input-upload').addEventListener('click', () => {
-    document.getElementById('dashboard-file-input').click();
-  });
-
-  // Copy latest indicator button
-  document.getElementById('btn-copy-latest-ioc').addEventListener('click', () => {
-    const text = document.getElementById('latest-ioc-text').textContent;
-    navigator.clipboard.writeText(text).then(() => {
-      showToast('Indicator copied to clipboard', 'success');
     });
-  });
 
-  // Raw JSON Modal Close
-  document.getElementById('btn-close-modal-json').addEventListener('click', () => {
-    document.getElementById('dashboard-raw-json-modal').classList.add('hidden');
-  });
+    topSearchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const indicator = topSearchInput.value.trim();
+        if (!indicator) return;
+        executeScan(indicator);
+      }
+    });
+  }
+
+  const btnPaste = document.getElementById('btn-input-paste');
+  if (btnPaste && dashboardInput) {
+    btnPaste.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          dashboardInput.value = text;
+          showToast('Pasted from clipboard', 'success');
+        }
+      } catch (err) {
+        showToast('Clipboard permission needed', 'error');
+      }
+    });
+  }
+
+  const btnUpload = document.getElementById('btn-input-upload');
+  const fileInput = document.getElementById('dashboard-file-input');
+  if (btnUpload && fileInput) {
+    btnUpload.addEventListener('click', () => fileInput.click());
+  }
+
+  const btnCopy = document.getElementById('btn-copy-latest-ioc');
+  if (btnCopy) {
+    btnCopy.addEventListener('click', () => {
+      const el = document.getElementById('latest-ioc-text');
+      const text = el ? el.textContent : '';
+      if (text) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('Indicator copied to clipboard', 'success');
+        });
+      }
+    });
+  }
+
+  const btnCloseModal = document.getElementById('btn-close-modal-json');
+  const rawModal = document.getElementById('dashboard-raw-json-modal');
+  if (btnCloseModal && rawModal) {
+    btnCloseModal.addEventListener('click', () => {
+      rawModal.classList.add('hidden');
+    });
+  }
 }
 
 async function executeScan(indicator) {
   const btnScan = document.getElementById('btn-dashboard-scan');
-  btnScan.disabled = true;
-  btnScan.innerHTML = `<span>Scanning...</span>`;
+  if (btnScan) {
+    btnScan.disabled = true;
+    btnScan.innerHTML = `<span>Scanning...</span>`;
+  }
 
   try {
     const res = await fetch('/api/scan', {
@@ -178,7 +199,6 @@ async function executeScan(indicator) {
     const scanData = await res.json();
     appState.currentScan = scanData;
 
-    // Switch to Dashboard view and update all panels
     switchView('dashboard');
     updateDashboardPanels(scanData);
     prependRecentScanRow(scanData);
@@ -189,15 +209,16 @@ async function executeScan(indicator) {
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
-    btnScan.disabled = false;
-    btnScan.innerHTML = `<span>Scan Now</span>`;
+    if (btnScan) {
+      btnScan.disabled = false;
+      btnScan.innerHTML = `<span>Scan Now</span>`;
+    }
     initIcons();
   }
 }
 
 /* ================= 3. UPDATE DASHBOARD PANELS ================= */
 function updateDashboardPanels(data) {
-  // 1. Latest Scan Result Header
   const verdictTag = document.getElementById('latest-verdict-tag');
   const iocText = document.getElementById('latest-ioc-text');
   const iocMeta = document.getElementById('latest-ioc-sub');
@@ -205,70 +226,87 @@ function updateDashboardPanels(data) {
   const ringCircle = document.getElementById('latest-ring-circle');
 
   const verdictUpper = data.verdict.toUpperCase();
-  verdictTag.textContent = verdictUpper;
-  verdictTag.className = `verdict-tag-pill ${getVerdictClass(data.verdict)}`;
-
-  iocText.textContent = data.defanged_indicator || data.indicator;
-  iocMeta.textContent = `${data.type.toUpperCase()} • Scanned just now`;
-
-  const scoreVal = Math.round(data.confidence_score);
-  scoreNum.textContent = scoreVal;
-  scoreNum.className = `dial-main-num ${getScoreColorClass(data.verdict, scoreVal)}`;
-
-  ringCircle.setAttribute('stroke-dasharray', `${scoreVal}, 100`);
-
-  // Summary Text
-  const summaryEl = document.getElementById('latest-summary-text');
-  if (data.verdict === 'malicious') {
-    summaryEl.textContent = `This ${data.type.toUpperCase()} is detected as malicious by multiple security intelligence feeds. It represents an elevated security hazard.`;
-  } else if (data.verdict === 'suspicious') {
-    summaryEl.textContent = `This ${data.type.toUpperCase()} exhibits suspicious heuristic indicators or newly registered characteristics. Further monitoring recommended.`;
-  } else if (data.verdict === 'clean') {
-    summaryEl.textContent = `This ${data.type.toUpperCase()} was evaluated against active security datasets and verified clean with 0 malicious signals.`;
-  } else {
-    summaryEl.textContent = `No active threat reputation or malicious records observed for this indicator.`;
+  if (verdictTag) {
+    verdictTag.textContent = verdictUpper;
+    verdictTag.className = `verdict-tag-pill ${getVerdictClass(data.verdict)}`;
   }
 
-  // 4 Stats Badges
-  document.getElementById('latest-stat-date').textContent = new Date(data.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (iocText) iocText.textContent = data.defanged_indicator || data.indicator;
+  if (iocMeta) iocMeta.textContent = `${data.type.toUpperCase()} • Scanned just now`;
+
+  const scoreVal = Math.round(data.confidence_score);
+  if (scoreNum) {
+    scoreNum.textContent = scoreVal;
+    scoreNum.className = `dial-main-num ${getScoreColorClass(data.verdict, scoreVal)}`;
+  }
+
+  if (ringCircle) ringCircle.setAttribute('stroke-dasharray', `${scoreVal}, 100`);
+
+  const summaryEl = document.getElementById('latest-summary-text');
+  if (summaryEl) {
+    if (data.verdict === 'malicious') {
+      summaryEl.textContent = `This ${data.type.toUpperCase()} is detected as malicious by multiple security intelligence feeds. It represents an elevated security hazard.`;
+    } else if (data.verdict === 'suspicious') {
+      summaryEl.textContent = `This ${data.type.toUpperCase()} exhibits suspicious heuristic indicators or newly registered characteristics. Further monitoring recommended.`;
+    } else if (data.verdict === 'clean') {
+      summaryEl.textContent = `This ${data.type.toUpperCase()} was evaluated against active security datasets and verified clean with 0 malicious signals.`;
+    } else {
+      summaryEl.textContent = `No active threat reputation or malicious records observed for this indicator.`;
+    }
+  }
+
+  const statDate = document.getElementById('latest-stat-date');
+  if (statDate) statDate.textContent = new Date(data.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
   const validSources = data.sources.filter(s => s.status !== 'skipped');
   const maliciousSources = data.sources.filter(s => s.verdict === 'malicious');
   
-  document.getElementById('latest-stat-sources').textContent = `${validSources.length} / 18`;
-  document.getElementById('latest-stat-detections').textContent = `${maliciousSources.length}`;
-  document.getElementById('latest-stat-verdict').textContent = verdictUpper;
-  document.getElementById('latest-stat-verdict').className = `stat-val ${getVerdictColorClass(data.verdict)}`;
+  const statSources = document.getElementById('latest-stat-sources');
+  if (statSources) statSources.textContent = `${validSources.length} / 18`;
+
+  const statDetections = document.getElementById('latest-stat-detections');
+  if (statDetections) statDetections.textContent = `${maliciousSources.length}`;
+
+  const statVerdict = document.getElementById('latest-stat-verdict');
+  if (statVerdict) {
+    statVerdict.textContent = verdictUpper;
+    statVerdict.className = `stat-val ${getVerdictColorClass(data.verdict)}`;
+  }
 
   // Risk Factors & Tags
   const factorsList = document.getElementById('latest-factors-list');
-  factorsList.innerHTML = '';
-  if (data.scoring_breakdown && data.scoring_breakdown.length > 0) {
-    data.scoring_breakdown.slice(0, 4).forEach(f => {
-      const li = document.createElement('li');
-      li.textContent = `• ${f.reason}`;
-      factorsList.appendChild(li);
-    });
-  } else {
-    factorsList.innerHTML = `<li>• No adverse risk factors recorded</li><li>• Benign profile verified</li>`;
+  if (factorsList) {
+    factorsList.innerHTML = '';
+    if (data.scoring_breakdown && data.scoring_breakdown.length > 0) {
+      data.scoring_breakdown.slice(0, 4).forEach(f => {
+        const li = document.createElement('li');
+        li.textContent = `• ${f.reason}`;
+        factorsList.appendChild(li);
+      });
+    } else {
+      factorsList.innerHTML = `<li>• No adverse risk factors recorded</li><li>• Benign profile verified</li>`;
+    }
   }
 
   const tagsList = document.getElementById('latest-tags-list');
-  tagsList.innerHTML = '';
-  const tags = [`type-${data.type}`];
-  if (data.verdict === 'malicious') tags.push('threat-flagged', 'reputation-penalty');
-  if (data.verdict === 'suspicious') tags.push('elevated-risk');
-  if (data.verdict === 'clean') tags.push('verified-clean', 'whitelisted');
+  if (tagsList) {
+    tagsList.innerHTML = '';
+    const tags = [`type-${data.type}`];
+    if (data.verdict === 'malicious') tags.push('threat-flagged', 'reputation-penalty');
+    if (data.verdict === 'suspicious') tags.push('elevated-risk');
+    if (data.verdict === 'clean') tags.push('verified-clean', 'whitelisted');
 
-  tags.forEach(t => {
-    const span = document.createElement('span');
-    span.className = 'pill-tag';
-    span.textContent = t;
-    tagsList.appendChild(span);
-  });
+    tags.forEach(t => {
+      const span = document.createElement('span');
+      span.className = 'pill-tag';
+      span.textContent = t;
+      tagsList.appendChild(span);
+    });
+  }
 
-  // 2. Source Breakdown List
+  // Source Breakdown List
   const sourcesContainer = document.getElementById('dashboard-sources-list');
-  if (data.sources && data.sources.length > 0) {
+  if (sourcesContainer && data.sources && data.sources.length > 0) {
     sourcesContainer.innerHTML = '';
     data.sources.forEach(src => {
       const row = document.createElement('div');
@@ -290,11 +328,15 @@ function updateDashboardPanels(data) {
     });
   }
 
-  // 3. Risk Score Donut Gauge & Legend
-  document.getElementById('donut-score-val').textContent = scoreVal;
+  // Risk Score Donut Gauge & Legend
+  const donutScore = document.getElementById('donut-score-val');
+  if (donutScore) donutScore.textContent = scoreVal;
+
   const donutRisk = document.getElementById('donut-risk-label');
-  donutRisk.textContent = `${data.risk_level} RISK`;
-  donutRisk.style.color = getScoreHexColor(data.verdict, scoreVal);
+  if (donutRisk) {
+    donutRisk.textContent = `${data.risk_level} RISK`;
+    donutRisk.style.color = getScoreHexColor(data.verdict, scoreVal);
+  }
 
   initIcons();
 }
@@ -341,6 +383,8 @@ function getSourceIcon(name) {
 function initFileDropZone() {
   const dropZone = document.getElementById('dashboard-file-dropzone');
   const fileInput = document.getElementById('dashboard-file-input');
+
+  if (!dropZone || !fileInput) return;
 
   dropZone.addEventListener('click', () => fileInput.click());
 
@@ -405,7 +449,8 @@ function initSupportedPills() {
   document.querySelectorAll('.type-pill').forEach(pill => {
     if (pill.id === 'pill-file-trigger') {
       pill.addEventListener('click', () => {
-        document.getElementById('dashboard-file-input').click();
+        const fileInput = document.getElementById('dashboard-file-input');
+        if (fileInput) fileInput.click();
       });
       return;
     }
@@ -413,7 +458,8 @@ function initSupportedPills() {
     pill.addEventListener('click', () => {
       const sample = pill.getAttribute('data-sample');
       if (sample) {
-        document.getElementById('dashboard-ioc-input').value = sample;
+        const dashInput = document.getElementById('dashboard-ioc-input');
+        if (dashInput) dashInput.value = sample;
         executeScan(sample);
       }
     });
@@ -423,6 +469,8 @@ function initSupportedPills() {
 /* ================= 6. RECENT SCANS TABLE & LOG ================= */
 function prependRecentScanRow(data) {
   const tbody = document.getElementById('recent-scans-tbody');
+  if (!tbody) return;
+
   const tr = document.createElement('tr');
   const vClass = getVerdictClass(data.verdict);
   const sClass = getScoreColorClass(data.verdict, data.confidence_score);
@@ -442,16 +490,23 @@ function prependRecentScanRow(data) {
 
   tbody.insertBefore(tr, tbody.firstChild);
 
-  // Wire new inspect button
-  tr.querySelector('.btn-inspect').addEventListener('click', () => {
-    renderFullScanReport(data);
-    switchView('scan');
-  });
+  const inspectBtn = tr.querySelector('.btn-inspect');
+  if (inspectBtn) {
+    inspectBtn.addEventListener('click', () => {
+      renderFullScanReport(data);
+      switchView('scan');
+    });
+  }
 
-  tr.querySelector('.btn-export-raw').addEventListener('click', () => {
-    document.getElementById('modal-json-pre').textContent = JSON.stringify(data, null, 2);
-    document.getElementById('dashboard-raw-json-modal').classList.remove('hidden');
-  });
+  const rawBtn = tr.querySelector('.btn-export-raw');
+  if (rawBtn) {
+    rawBtn.addEventListener('click', () => {
+      const modalPre = document.getElementById('modal-json-pre');
+      const rawModal = document.getElementById('dashboard-raw-json-modal');
+      if (modalPre) modalPre.textContent = JSON.stringify(data, null, 2);
+      if (rawModal) rawModal.classList.remove('hidden');
+    });
+  }
 
   initIcons();
 }
@@ -483,6 +538,7 @@ async function loadInitialHistory() {
       const data = await res.json();
       if (data.records && data.records.length > 0) {
         const tbody = document.getElementById('recent-scans-tbody');
+        if (!tbody) return;
         tbody.innerHTML = '';
         data.records.forEach(rec => {
           const tr = document.createElement('tr');
@@ -503,9 +559,12 @@ async function loadInitialHistory() {
           `;
           tbody.appendChild(tr);
 
-          tr.querySelector('.btn-inspect').addEventListener('click', () => {
-            executeScan(rec.indicator);
-          });
+          const btnInsp = tr.querySelector('.btn-inspect');
+          if (btnInsp) {
+            btnInsp.addEventListener('click', () => {
+              executeScan(rec.indicator);
+            });
+          }
         });
         initIcons();
       }
@@ -519,15 +578,22 @@ function incrementKPICounters(verdict) {
   else if (verdict === 'suspicious') appState.kpiStats.suspicious += 1;
   else if (verdict === 'clean') appState.kpiStats.clean += 1;
 
-  document.getElementById('kpi-total-scans').textContent = appState.kpiStats.total.toLocaleString();
-  document.getElementById('kpi-malicious-scans').textContent = appState.kpiStats.malicious.toLocaleString();
-  document.getElementById('kpi-suspicious-scans').textContent = appState.kpiStats.suspicious.toLocaleString();
-  document.getElementById('kpi-clean-scans').textContent = appState.kpiStats.clean.toLocaleString();
+  const totalEl = document.getElementById('kpi-total-scans');
+  const malEl = document.getElementById('kpi-malicious-scans');
+  const suspEl = document.getElementById('kpi-suspicious-scans');
+  const cleanEl = document.getElementById('kpi-clean-scans');
+
+  if (totalEl) totalEl.textContent = appState.kpiStats.total.toLocaleString();
+  if (malEl) malEl.textContent = appState.kpiStats.malicious.toLocaleString();
+  if (suspEl) suspEl.textContent = appState.kpiStats.suspicious.toLocaleString();
+  if (cleanEl) cleanEl.textContent = appState.kpiStats.clean.toLocaleString();
 }
 
 /* ================= 7. FULL SCAN REPORT VIEW ================= */
 function renderFullScanReport(data) {
   const container = document.getElementById('full-scan-report-container');
+  if (!container) return;
+
   const vClass = getVerdictClass(data.verdict);
   const scoreVal = Math.round(data.confidence_score);
 
@@ -584,8 +650,10 @@ function renderFullScanReport(data) {
   const rawBtn = document.getElementById('btn-report-raw-json');
   if (rawBtn) {
     rawBtn.addEventListener('click', () => {
-      document.getElementById('modal-json-pre').textContent = JSON.stringify(data, null, 2);
-      document.getElementById('dashboard-raw-json-modal').classList.remove('hidden');
+      const modalPre = document.getElementById('modal-json-pre');
+      const rawModal = document.getElementById('dashboard-raw-json-modal');
+      if (modalPre) modalPre.textContent = JSON.stringify(data, null, 2);
+      if (rawModal) rawModal.classList.remove('hidden');
     });
   }
 
@@ -603,27 +671,30 @@ function initBulkView() {
   const tbody = document.getElementById('bulk-view-tbody');
   const btnExport = document.getElementById('btn-bulk-view-export');
 
+  if (!textarea || !btnExecute) return;
   let bulkItems = [];
 
   textarea.addEventListener('input', () => {
     const count = textarea.value.split(/[\r\n,;\t]+/).filter(l => l.trim().length > 0).length;
-    countIndicator.textContent = `${count} IOCs detected`;
+    if (countIndicator) countIndicator.textContent = `${count} IOCs detected`;
   });
 
-  btnImportCsv.addEventListener('click', () => fileInput.click());
+  if (btnImportCsv && fileInput) {
+    btnImportCsv.addEventListener('click', () => fileInput.click());
 
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files.length > 0) {
-      const file = fileInput.files[0];
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        textarea.value = e.target.result;
-        const count = textarea.value.split(/[\r\n,;\t]+/).filter(l => l.trim().length > 0).length;
-        countIndicator.textContent = `${count} IOCs imported from ${file.name}`;
-      };
-      reader.readAsText(file);
-    }
-  });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          textarea.value = e.target.result;
+          const count = textarea.value.split(/[\r\n,;\t]+/).filter(l => l.trim().length > 0).length;
+          if (countIndicator) countIndicator.textContent = `${count} IOCs imported from ${file.name}`;
+        };
+        reader.readAsText(file);
+      }
+    });
+  }
 
   btnExecute.addEventListener('click', async () => {
     const content = textarea.value.trim();
@@ -646,40 +717,46 @@ function initBulkView() {
       const data = await res.json();
       bulkItems = data.results;
 
-      // Update KPI counters
-      document.getElementById('bulk-kpi-total').textContent = data.total;
-      document.getElementById('bulk-kpi-mal').textContent = data.malicious_count;
-      document.getElementById('bulk-kpi-susp').textContent = data.suspicious_count;
-      document.getElementById('bulk-kpi-clean').textContent = data.clean_count;
+      const kpiTotal = document.getElementById('bulk-kpi-total');
+      const kpiMal = document.getElementById('bulk-kpi-mal');
+      const kpiSusp = document.getElementById('bulk-kpi-susp');
+      const kpiClean = document.getElementById('bulk-kpi-clean');
 
-      tbody.innerHTML = '';
-      data.results.forEach(row => {
-        const tr = document.createElement('tr');
-        const vClass = getVerdictClass(row.verdict);
-        tr.innerHTML = `
-          <td>${row.index + 1}</td>
-          <td><code>${escapeHtml(row.defanged || row.indicator)}</code></td>
-          <td><span class="type-cell-tag">${row.ioc_type.toUpperCase()}</span></td>
-          <td><span class="badge-source-verdict ${vClass}">${row.verdict}</span></td>
-          <td><strong class="score-num-cell ${getScoreColorClass(row.verdict, row.confidence_score)}">${Math.round(row.confidence_score)}</strong></td>
-          <td>${row.risk_level}</td>
-          <td>
-            <button class="btn-secondary btn-sm btn-inspect-batch" data-ioc="${escapeHtml(row.indicator)}">
-              Inspect
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+      if (kpiTotal) kpiTotal.textContent = data.total;
+      if (kpiMal) kpiMal.textContent = data.malicious_count;
+      if (kpiSusp) kpiSusp.textContent = data.suspicious_count;
+      if (kpiClean) kpiClean.textContent = data.clean_count;
 
-      document.querySelectorAll('.btn-inspect-batch').forEach(b => {
-        b.addEventListener('click', (e) => {
-          const ioc = e.currentTarget.getAttribute('data-ioc');
-          executeScan(ioc);
+      if (tbody) {
+        tbody.innerHTML = '';
+        data.results.forEach(row => {
+          const tr = document.createElement('tr');
+          const vClass = getVerdictClass(row.verdict);
+          tr.innerHTML = `
+            <td>${row.index + 1}</td>
+            <td><code>${escapeHtml(row.defanged || row.indicator)}</code></td>
+            <td><span class="type-cell-tag">${row.ioc_type.toUpperCase()}</span></td>
+            <td><span class="badge-source-verdict ${vClass}">${row.verdict}</span></td>
+            <td><strong class="score-num-cell ${getScoreColorClass(row.verdict, row.confidence_score)}">${Math.round(row.confidence_score)}</strong></td>
+            <td>${row.risk_level}</td>
+            <td>
+              <button class="btn-secondary btn-sm btn-inspect-batch" data-ioc="${escapeHtml(row.indicator)}">
+                Inspect
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
         });
-      });
 
-      resultsCard.classList.remove('hidden');
+        document.querySelectorAll('.btn-inspect-batch').forEach(b => {
+          b.addEventListener('click', (e) => {
+            const ioc = e.currentTarget.getAttribute('data-ioc');
+            if (ioc) executeScan(ioc);
+          });
+        });
+      }
+
+      if (resultsCard) resultsCard.classList.remove('hidden');
       showToast(`Batch completed: ${data.total} indicators processed in ${data.duration_seconds}s`, 'success');
     } catch (err) {
       showToast(err.message, 'error');
@@ -690,19 +767,21 @@ function initBulkView() {
     }
   });
 
-  btnExport.addEventListener('click', () => {
-    if (!bulkItems || bulkItems.length === 0) return;
-    let csv = 'Index,Indicator,Defanged,Type,Verdict,Score,RiskLevel\n';
-    bulkItems.forEach(r => {
-      csv += `${r.index + 1},"${r.indicator}","${r.defanged}",${r.ioc_type},${r.verdict},${r.confidence_score},${r.risk_level}\n`;
+  if (btnExport) {
+    btnExport.addEventListener('click', () => {
+      if (!bulkItems || bulkItems.length === 0) return;
+      let csv = 'Index,Indicator,Defanged,Type,Verdict,Score,RiskLevel\n';
+      bulkItems.forEach(r => {
+        csv += `${r.index + 1},"${r.indicator}","${r.defanged}",${r.ioc_type},${r.verdict},${r.confidence_score},${r.risk_level}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `threatscope_batch_${Date.now()}.csv`;
+      link.click();
     });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `threatscope_batch_${Date.now()}.csv`;
-    link.click();
-  });
+  }
 }
 
 /* ================= 9. HISTORY FULL PAGE ================= */
@@ -712,29 +791,37 @@ function initHistoryView() {
   const searchInput = document.getElementById('history-page-search');
   const btnClearAll = document.getElementById('btn-history-clear-all');
 
-  typeFilter.addEventListener('change', loadHistoryPage);
-  verdictFilter.addEventListener('change', loadHistoryPage);
+  if (typeFilter) typeFilter.addEventListener('change', loadHistoryPage);
+  if (verdictFilter) verdictFilter.addEventListener('change', loadHistoryPage);
 
-  let timeout = null;
-  searchInput.addEventListener('input', () => {
-    clearTimeout(timeout);
-    timeout = setTimeout(loadHistoryPage, 300);
-  });
+  if (searchInput) {
+    let timeout = null;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(loadHistoryPage, 300);
+    });
+  }
 
-  btnClearAll.addEventListener('click', async () => {
-    if (confirm('Clear all historical scan logs?')) {
-      await fetch('/api/history', { method: 'DELETE' });
-      showToast('Scan history deleted', 'success');
-      loadHistoryPage();
-    }
-  });
+  if (btnClearAll) {
+    btnClearAll.addEventListener('click', async () => {
+      if (confirm('Clear all historical scan logs?')) {
+        await fetch('/api/history', { method: 'DELETE' });
+        showToast('Scan history deleted', 'success');
+        loadHistoryPage();
+      }
+    });
+  }
 }
 
 async function loadHistoryPage() {
-  const type = document.getElementById('history-page-type').value;
-  const verdict = document.getElementById('history-page-verdict').value;
-  const search = document.getElementById('history-page-search').value.trim();
+  const typeEl = document.getElementById('history-page-type');
+  const verdictEl = document.getElementById('history-page-verdict');
+  const searchEl = document.getElementById('history-page-search');
   const tbody = document.getElementById('history-full-tbody');
+
+  const type = typeEl ? typeEl.value : 'all';
+  const verdict = verdictEl ? verdictEl.value : 'all';
+  const search = searchEl ? searchEl.value.trim() : '';
 
   try {
     let url = `/api/history?limit=100&ioc_type=${type}&verdict=${verdict}`;
@@ -744,31 +831,34 @@ async function loadHistoryPage() {
     if (!res.ok) throw new Error('Failed to load history');
     const data = await res.json();
 
-    tbody.innerHTML = '';
-    if (data.records && data.records.length > 0) {
-      data.records.forEach(r => {
-        const tr = document.createElement('tr');
-        const vClass = getVerdictClass(r.verdict);
-        tr.innerHTML = `
-          <td><code>${escapeHtml(r.defanged_indicator || r.indicator)}</code></td>
-          <td><span class="type-cell-tag">${r.ioc_type.toUpperCase()}</span></td>
-          <td><span class="badge-source-verdict ${vClass}">${r.verdict}</span></td>
-          <td><strong class="score-num-cell ${getScoreColorClass(r.verdict, r.confidence_score)}">${Math.round(r.confidence_score)}</strong></td>
-          <td>${new Date(r.scanned_at).toLocaleString()}</td>
-          <td class="text-right actions-cell">
-            <button class="btn-secondary btn-sm btn-rescan-row" data-ioc="${escapeHtml(r.indicator)}">Re-Scan</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      document.querySelectorAll('.btn-rescan-row').forEach(b => {
-        b.addEventListener('click', (e) => {
-          executeScan(e.currentTarget.getAttribute('data-ioc'));
+    if (tbody) {
+      tbody.innerHTML = '';
+      if (data.records && data.records.length > 0) {
+        data.records.forEach(r => {
+          const tr = document.createElement('tr');
+          const vClass = getVerdictClass(r.verdict);
+          tr.innerHTML = `
+            <td><code>${escapeHtml(r.defanged_indicator || r.indicator)}</code></td>
+            <td><span class="type-cell-tag">${r.ioc_type.toUpperCase()}</span></td>
+            <td><span class="badge-source-verdict ${vClass}">${r.verdict}</span></td>
+            <td><strong class="score-num-cell ${getScoreColorClass(r.verdict, r.confidence_score)}">${Math.round(r.confidence_score)}</strong></td>
+            <td>${new Date(r.scanned_at).toLocaleString()}</td>
+            <td class="text-right actions-cell">
+              <button class="btn-secondary btn-sm btn-rescan-row" data-ioc="${escapeHtml(r.indicator)}">Re-Scan</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
         });
-      });
-    } else {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">No historical scans found.</td></tr>`;
+
+        document.querySelectorAll('.btn-rescan-row').forEach(b => {
+          b.addEventListener('click', (e) => {
+            const ioc = e.currentTarget.getAttribute('data-ioc');
+            if (ioc) executeScan(ioc);
+          });
+        });
+      } else {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">No historical scans found.</td></tr>`;
+      }
     }
     initIcons();
   } catch (err) {}
@@ -777,6 +867,7 @@ async function loadHistoryPage() {
 /* ================= 10. THREAT INTEL & API INTEGRATIONS ================= */
 async function loadIntelPage() {
   const grid = document.getElementById('intel-feeds-grid');
+  if (!grid) return;
   try {
     const res = await fetch('/api/settings');
     if (res.ok) {
@@ -797,20 +888,23 @@ async function loadIntelPage() {
           `).join('')}
         </div>
       `;
+      initIcons();
     }
   } catch (err) {}
 }
 
 function initApiIntegrations() {
   const form = document.getElementById('api-integrations-form');
+  if (!form) return;
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {};
-    const vt = document.getElementById('page-key-vt').value.trim();
-    const abuse = document.getElementById('page-key-abuse').value.trim();
-    const urlscan = document.getElementById('page-key-urlscan').value.trim();
-    const gsb = document.getElementById('page-key-gsb').value.trim();
-    const mb = document.getElementById('page-key-mb').value.trim();
+    const vt = document.getElementById('page-key-vt')?.value.trim();
+    const abuse = document.getElementById('page-key-abuse')?.value.trim();
+    const urlscan = document.getElementById('page-key-urlscan')?.value.trim();
+    const gsb = document.getElementById('page-key-gsb')?.value.trim();
+    const mb = document.getElementById('page-key-mb')?.value.trim();
 
     if (vt) payload.virustotal = vt;
     if (abuse) payload.abuseipdb = abuse;
@@ -861,6 +955,7 @@ async function loadApiKeysStatus() {
 /* ================= 11. TOAST HELPER ================= */
 function showToast(msg, type = 'success') {
   const container = document.getElementById('toast-container');
+  if (!container) return;
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.textContent = msg;
