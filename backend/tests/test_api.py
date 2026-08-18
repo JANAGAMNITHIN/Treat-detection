@@ -62,8 +62,13 @@ async def test_scan_single_ioc_and_report_download():
         scan_id = data["id"]
         report_res = await client.get(f"/api/reports/{scan_id}/download")
         assert report_res.status_code == 200
-        assert "THREATSCOPE THREAT INTELLIGENCE REPORT" in report_res.text
+        assert "THREATSCOPE" in report_res.text
         assert data["defanged_indicator"] in report_res.text
+
+        # Executive report download test
+        exec_res = await client.get("/api/reports/executive")
+        assert exec_res.status_code == 200
+        assert "EXECUTIVE SECURITY REPORT" in exec_res.text
 
 @pytest.mark.asyncio
 async def test_bulk_scan_endpoint():

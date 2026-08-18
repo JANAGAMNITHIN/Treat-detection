@@ -902,30 +902,48 @@ async function loadInitialHistory() {
 }
 
 /* ================= 10. REPORT GENERATOR VIEW ================= */
+let currentReportType = 'technical';
+
 function initReportsView() {
+  const typeButtons = document.querySelectorAll('.btn-report-type');
   const selectScan = document.getElementById('report-select-scan');
   const btnDownloadPdf = document.getElementById('btn-download-pdf-report');
   const btnExportJson = document.getElementById('btn-export-json-report');
+  const checkboxes = document.querySelectorAll('.section-checkbox-label input');
+
+  // Type selection
+  typeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      typeButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentReportType = btn.getAttribute('data-type');
+      updateActiveReportPreview();
+    });
+  });
 
   if (selectScan) {
     selectScan.addEventListener('change', () => {
-      const selectedId = selectScan.value;
-      if (selectedId) {
-        const found = appState.recentScans.find(s => s.id === selectedId);
-        if (found) {
-          renderReportPreview(found);
-        }
-      }
+      updateActiveReportPreview();
     });
   }
+
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      updateActiveReportPreview();
+    });
+  });
 
   if (btnDownloadPdf) {
     btnDownloadPdf.addEventListener('click', () => {
       const selectedId = selectScan ? selectScan.value : (appState.currentScan ? appState.currentScan.id : null);
-      if (selectedId) {
-        window.open(`/api/reports/${selectedId}/download`, '_blank');
+      if (currentReportType === 'executive') {
+        window.open('/api/reports/executive', '_blank');
+      } else if (selectedId) {
+        window.open(`/api/reports/technical/${selectedId}`, '_blank');
+      } else if (appState.recentScans.length > 0) {
+        window.open(`/api/reports/technical/${appState.recentScans[0].id}`, '_blank');
       } else {
-        showToast('Please select a scan record to generate a report', 'error');
+        window.open('/api/reports/executive', '_blank');
       }
     });
   }
@@ -933,18 +951,14 @@ function initReportsView() {
   if (btnExportJson) {
     btnExportJson.addEventListener('click', () => {
       const selectedId = selectScan ? selectScan.value : (appState.currentScan ? appState.currentScan.id : null);
-      const found = appState.recentScans.find(s => s.id === selectedId) || appState.currentScan;
-      if (found) {
-        const jsonStr = JSON.stringify(found, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `threatscope_report_${found.id}.json`;
-        a.click();
-      } else {
-        showToast('Please select a scan record to export JSON', 'error');
-      }
+      const targetData = appState.recentScans.find(s => s.id === selectedId) || appState.currentScan || { scans: appState.recentScans, meta: "threatscope_export" };
+      const jsonStr = JSON.stringify(targetData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `threatscope_report_${Date.now()}.json`;
+      a.click();
     });
   }
 }
@@ -953,35 +967,133 @@ function refreshReportsDropdown() {
   const selectScan = document.getElementById('report-select-scan');
   if (!selectScan) return;
 
-  selectScan.innerHTML = '<option value="">-- Select a completed scan --</option>';
+  selectScan.innerHTML = '<option value="">All Scanned Indicators (Aggregated)</option>';
   appState.recentScans.forEach(s => {
     const opt = document.createElement('option');
     opt.value = s.id;
-    opt.textContent = `${s.defanged_indicator || s.indicator} (${s.verdict.toUpperCase()} - Score ${Math.round(s.confidence_score)})`;
+    opt.textContent = `${s.defanged_indicator || s.indicator} (${s.verdict ? s.verdict.toUpperCase() : 'IOC'} - Score ${Math.round(s.confidence_score)})`;
     selectScan.appendChild(opt);
   });
 
   if (appState.currentScan && appState.currentScan.id) {
     selectScan.value = appState.currentScan.id;
-    renderReportPreview(appState.currentScan);
   }
+
+  updateActiveReportPreview();
 }
 
-function renderReportPreview(data) {
+function updateActiveReportPreview() {
+  const selectScan = document.getElementById('report-select-scan');
   const preview = document.getElementById('report-preview-container');
   if (!preview) return;
 
+  const selectedId = selectScan ? selectScan.value : '';
+  const selectedScan = appState.recentScans.find(s => s.id === selectedId) || appState.currentScan || (appState.recentScans.length > 0 ? appState.recentScans[0] : null);
+
+  if (currentReportType === 'executive' || (!selectedScan && !selectedId)) {
+    renderExecutiveReportPreview(appState.recentScans);
+  } else if (currentReportType === 'audit') {
+    renderAuditLogPreview(appState.recentScans);
+  } else {
+    renderTechnicalReportPreview(selectedScan);
+  }
+}
+
+function renderExecutiveReportPreview(records) {
+  const preview = document.getElementById('report-preview-container');
+  if (!preview) return;
+
+  const total = records.length;
+  const mal = records.filter(r => r.verdict === 'malicious').length;
+  const susp = records.filter(r => r.verdict === 'suspicious').length;
+  const clean = records.filter(r => r.verdict === 'clean').length;
+  const avg = total > 0 ? Math.round(records.reduce((a, b) => a + (b.confidence_score || 0), 0) / total) : 0;
+  
+  const grade = mal > 0 ? 'HIGH RISK (C)' : (susp > 0 ? 'MODERATE RISK (B)' : 'EXCELLENT (A+)');
+  const gradeColor = mal > 0 ? '#ef4444' : (susp > 0 ? '#f97316' : '#10b981');
+
+  preview.innerHTML = `
+    <div class="report-document" style="background:#ffffff;color:#0f172a;">
+      <div class="report-doc-header" style="border-color:#2563eb;">
+        <div>
+          <h3 style="color:#1e3a8a;">EXECUTIVE THREAT LANDSCAPE SUMMARY</h3>
+          <span style="font-size:0.75rem;color:#64748b;">Automated Threat Intelligence Briefing • Confidential</span>
+        </div>
+        <button class="btn-scan-main btn-sm" onclick="window.open('/api/reports/executive','_blank')">Full PDF Report</button>
+      </div>
+
+      <!-- Posture Banner -->
+      <div style="background:#f1f5f9;border-left:6px solid ${gradeColor};padding:1.25rem;border-radius:8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <div>
+          <span style="font-size:0.75rem;color:#64748b;font-weight:700;text-transform:uppercase;">Overall Threat Posture Grade</span>
+          <div style="font-size:1.6rem;font-weight:900;color:${gradeColor};">${grade}</div>
+          <span style="font-size:0.85rem;color:#334155;">Evaluated across all active security telemetry feeds.</span>
+        </div>
+        <div style="text-align:right;">
+          <span style="font-size:0.75rem;color:#64748b;">Average Risk Score</span>
+          <div style="font-size:1.8rem;font-weight:900;color:${gradeColor};">${avg} / 100</div>
+        </div>
+      </div>
+
+      <!-- KPI Metrics Row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:1rem;border-radius:6px;text-align:center;">
+          <span style="font-size:0.75rem;color:#64748b;">Total Evaluated</span>
+          <strong style="display:block;font-size:1.4rem;color:#2563eb;">${total}</strong>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:1rem;border-radius:6px;text-align:center;">
+          <span style="font-size:0.75rem;color:#64748b;">Malicious Flags</span>
+          <strong style="display:block;font-size:1.4rem;color:#ef4444;">${mal}</strong>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:1rem;border-radius:6px;text-align:center;">
+          <span style="font-size:0.75rem;color:#64748b;">Suspicious Anomalies</span>
+          <strong style="display:block;font-size:1.4rem;color:#f97316;">${susp}</strong>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:1rem;border-radius:6px;text-align:center;">
+          <span style="font-size:0.75rem;color:#64748b;">Verified Clean</span>
+          <strong style="display:block;font-size:1.4rem;color:#10b981;">${clean}</strong>
+        </div>
+      </div>
+
+      <!-- Strategic Summary -->
+      <div>
+        <span class="section-label" style="color:#0f172a;">Executive Recommendations</span>
+        <ul class="bullet-list" style="color:#334155;margin-top:0.5rem;">
+          <li>• Verify automatic gateway firewall sinkholing for all malicious IOCs.</li>
+          <li>• Ensure active multi-provider API keys are provisioned for full vendor depth.</li>
+          <li>• Review telemetry logs for persistent connection attempts to flagged domains.</li>
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+function renderTechnicalReportPreview(data) {
+  const preview = document.getElementById('report-preview-container');
+  if (!preview) return;
+
+  if (!data) {
+    preview.innerHTML = `
+      <div class="report-empty-state">
+        <i data-lucide="file-search"></i>
+        <p>Perform a scan or select an indicator from history to generate the Technical Incident Dossier.</p>
+      </div>
+    `;
+    initIcons();
+    return;
+  }
+
   const vClass = getVerdictClass(data.verdict);
-  const scoreVal = Math.round(data.confidence_score);
+  const scoreVal = Math.round(data.confidence_score || 0);
 
   preview.innerHTML = `
     <div class="report-document">
       <div class="report-doc-header">
         <div>
-          <h3>THREATSCOPE INTELLIGENCE REPORT</h3>
-          <span style="font-size:0.75rem;color:var(--text-muted);">Ref ID: ${data.id} • Generated UTC</span>
+          <h3>TECHNICAL INCIDENT DOSSIER</h3>
+          <span style="font-size:0.75rem;color:var(--text-muted);">Incident Ref: ${data.id} • ThreatScope v1.0.0</span>
         </div>
-        <span class="badge-source-verdict ${vClass}" style="font-size:1rem;padding:0.4rem 1rem;">${data.verdict.toUpperCase()}</span>
+        <span class="badge-source-verdict ${vClass}" style="font-size:1rem;padding:0.4rem 1rem;">${data.verdict ? data.verdict.toUpperCase() : 'UNKNOWN'}</span>
       </div>
 
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
@@ -991,13 +1103,33 @@ function renderReportPreview(data) {
           <span style="font-size:0.8rem;color:var(--text-muted);display:block;margin-top:0.35rem;">Type: ${data.type ? data.type.toUpperCase() : (data.ioc_type ? data.ioc_type.toUpperCase() : 'URL')} | Risk Level: ${data.risk_level}</span>
         </div>
         <div style="text-align:right;">
-          <span class="section-label">Confidence Score</span>
+          <span class="section-label">Confidence Threat Score</span>
           <strong class="${getScoreColorClass(data.verdict, scoreVal)}" style="font-size:2rem;font-family:var(--font-mono);">${scoreVal} / 100</strong>
         </div>
       </div>
 
+      <!-- Kill-Chain Attack Flow -->
       <div style="margin-bottom:1.5rem;">
-        <span class="section-label">Risk Rationale & Detection Breakdown</span>
+        <span class="section-label">Chronological MITRE Kill-Chain Sequence</span>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem;">
+          <div style="background:var(--bg-card-alt);border-left:4px solid #f97316;padding:0.6rem 1rem;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">
+            <div><strong>1. Weaponization & Domain Staging</strong><div style="font-size:0.75rem;color:var(--text-muted);">Target indicator registered and staged with threat characteristics.</div></div>
+            <span class="badge-source-verdict tag-suspicious">DETECTED</span>
+          </div>
+          <div style="background:var(--bg-card-alt);border-left:4px solid #ef4444;padding:0.6rem 1rem;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">
+            <div><strong>2. Delivery & Execution Phase</strong><div style="font-size:0.75rem;color:var(--text-muted);">Cross-referenced with VirusTotal, AbuseIPDB, and MalwareBazaar signatures.</div></div>
+            <span class="badge-source-verdict tag-malicious">EVALUATED</span>
+          </div>
+          <div style="background:var(--bg-card-alt);border-left:4px solid #38bdf8;padding:0.6rem 1rem;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">
+            <div><strong>3. Automated Containment Policy</strong><div style="font-size:0.75rem;color:var(--text-muted);">Egress block, host quarantine & DNS sinkholing rules generated.</div></div>
+            <span class="badge-source-verdict tag-clean">READY</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detection Breakdown -->
+      <div style="margin-bottom:1.5rem;">
+        <span class="section-label">Scoring Engine Penalty Breakdown</span>
         <ul class="bullet-list" style="margin-top:0.5rem;">
           ${data.scoring_breakdown && data.scoring_breakdown.length > 0 
             ? data.scoring_breakdown.map(f => `<li>• <strong>${escapeHtml(f.source)}:</strong> ${escapeHtml(f.reason)} (+${f.points_contributed} pts)</li>`).join('')
@@ -1005,17 +1137,63 @@ function renderReportPreview(data) {
         </ul>
       </div>
 
+      <!-- Remediation Playbook -->
       <div>
-        <span class="section-label">Actionable Recommendations</span>
+        <span class="section-label">Actionable Remediation Playbook</span>
         <ul class="bullet-list-red" style="margin-top:0.5rem;">
           ${data.verdict === 'malicious' 
-            ? `<li>• Block communication with ${escapeHtml(data.defanged_indicator || data.indicator)} in perimeter firewalls.</li><li>• Isolate any internal hosts that initiated connections.</li>` 
-            : `<li>• Indicator is currently benign. No blocking action necessary.</li>`}
+            ? `<li>• Apply perimeter firewall rule to drop all traffic to ${escapeHtml(data.defanged_indicator || data.indicator)}.</li><li>• Check internal SIEM and proxy logs for historical connections in past 30 days.</li>` 
+            : `<li>• Indicator is verified clean. Standard telemetry monitoring applies.</li>`}
         </ul>
       </div>
     </div>
   `;
 }
+
+function renderAuditLogPreview(records) {
+  const preview = document.getElementById('report-preview-container');
+  if (!preview) return;
+
+  preview.innerHTML = `
+    <div class="report-document">
+      <div class="report-doc-header">
+        <div>
+          <h3>SECURITY AUDIT LOG EXPORT</h3>
+          <span style="font-size:0.75rem;color:var(--text-muted);">Chronological event spreadsheet for SIEM ingest</span>
+        </div>
+        <a href="/api/history/export" class="btn-scan-main btn-sm" download>Download CSV</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="soc-data-table">
+          <thead>
+            <tr>
+              <th>Scan ID</th>
+              <th>Indicator</th>
+              <th>Type</th>
+              <th>Verdict</th>
+              <th>Score</th>
+              <th>Scanned At</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${records.map(r => `
+              <tr>
+                <td><code>${r.id ? r.id.slice(0,8) : 'N/A'}</code></td>
+                <td><code>${escapeHtml(r.defanged_indicator || r.indicator)}</code></td>
+                <td>${(r.ioc_type || r.type || 'URL').toUpperCase()}</td>
+                <td><span class="badge-source-verdict ${getVerdictClass(r.verdict)}">${r.verdict}</span></td>
+                <td><strong>${Math.round(r.confidence_score || 0)}</strong></td>
+                <td>${new Date(r.scanned_at || Date.now()).toLocaleTimeString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 
 /* ================= 11. FULL SCAN REPORT VIEW ================= */
 function renderFullScanReport(data) {

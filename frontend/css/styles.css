@@ -1321,12 +1321,64 @@ code, pre {
   gap: 1.25rem;
 }
 
+.report-type-selector-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 1.25rem;
+}
+
+.btn-report-type {
+  background-color: var(--bg-card-alt);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  color: var(--text-secondary);
+}
+
+.btn-report-type svg {
+  width: 22px;
+  height: 22px;
+  color: #60a5fa;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.btn-report-type:hover {
+  background-color: var(--bg-card-hover);
+  border-color: rgba(37, 99, 235, 0.4);
+}
+
+.btn-report-type.active {
+  background-color: rgba(37, 99, 235, 0.12);
+  border-color: var(--color-brand);
+  color: #ffffff;
+}
+
+.type-btn-text strong {
+  font-size: 0.95rem;
+  color: #ffffff;
+  display: block;
+}
+
+.type-btn-text span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
 .report-controls-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   gap: 1rem;
-  flex-wrap: wrap;
   border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 1.25rem;
 }
@@ -1335,8 +1387,7 @@ code, pre {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex: 1;
-  max-width: 500px;
+  max-width: 600px;
 }
 
 .report-select-group label {
@@ -1345,18 +1396,45 @@ code, pre {
   white-space: nowrap;
 }
 
+.modular-toggles-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background-color: var(--bg-input);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-card);
+}
+
+.section-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.section-checkbox-label input {
+  accent-color: var(--color-brand);
+}
+
 .report-actions-group {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  justify-content: flex-end;
 }
 
 .report-preview-container {
-  min-height: 400px;
+  min-height: 450px;
   background-color: var(--bg-card-alt);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-md);
   padding: 1.5rem;
+  overflow-y: auto;
+  max-height: 700px;
 }
 
 .report-empty-state {
@@ -1364,7 +1442,7 @@ code, pre {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 350px;
+  height: 380px;
   color: var(--text-muted);
   text-align: center;
   gap: 1rem;

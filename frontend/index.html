@@ -576,22 +576,80 @@
         <section id="view-reports" class="app-view">
           <div class="view-header-title">
             <h2>Threat Intelligence Report Generator</h2>
-            <p>Generate, preview, and download formal threat analysis reports for any scanned indicator.</p>
+            <p>Export executive summaries, technical incident dossiers, or raw audit logs with customizable modular sections.</p>
           </div>
 
           <div class="glass-card report-generator-card">
+            
+            <!-- Report Type Selection Bar -->
+            <div class="report-type-selector-bar">
+              <button type="button" class="btn-report-type active" data-type="technical">
+                <i data-lucide="file-code"></i>
+                <div class="type-btn-text">
+                  <strong>Technical Incident Dossier</strong>
+                  <span>Deep dive, kill-chain timeline, raw findings & playbook</span>
+                </div>
+              </button>
+
+              <button type="button" class="btn-report-type" data-type="executive">
+                <i data-lucide="award"></i>
+                <div class="type-btn-text">
+                  <strong>Executive Summary Report</strong>
+                  <span>Posture grade, high-level charts & zero technical jargon</span>
+                </div>
+              </button>
+
+              <button type="button" class="btn-report-type" data-type="audit">
+                <i data-lucide="database"></i>
+                <div class="type-btn-text">
+                  <strong>Raw Security Audit Log</strong>
+                  <span>Filterable structured data export for SIEM & analysts</span>
+                </div>
+              </div>
+
+            <!-- Controls & Modular Section Config -->
             <div class="report-controls-bar">
-              <div class="report-select-group">
-                <label for="report-select-scan">Select Scan Record:</label>
+              <div class="report-select-group" id="report-scope-wrapper">
+                <label for="report-select-scan">Target Scan / Scope:</label>
                 <select id="report-select-scan" class="form-select">
-                  <option value="">-- Select a completed scan --</option>
+                  <option value="">All Scanned Indicators (Aggregated)</option>
                 </select>
               </div>
+
+              <!-- Modular Section Toggles -->
+              <div class="modular-toggles-bar">
+                <span class="supported-label">Include Sections:</span>
+                <label class="section-checkbox-label">
+                  <input type="checkbox" id="sec-toggle-summary" checked>
+                  <span>Executive Grade</span>
+                </label>
+                <label class="section-checkbox-label">
+                  <input type="checkbox" id="sec-toggle-timeline" checked>
+                  <span>Kill-Chain Timeline</span>
+                </label>
+                <label class="section-checkbox-label">
+                  <input type="checkbox" id="sec-toggle-matrix" checked>
+                  <span>Intel Matrix</span>
+                </label>
+                <label class="section-checkbox-label">
+                  <input type="checkbox" id="sec-toggle-offenders" checked>
+                  <span>Top Offenders</span>
+                </label>
+                <label class="section-checkbox-label">
+                  <input type="checkbox" id="sec-toggle-playbook" checked>
+                  <span>Remediation Playbook</span>
+                </label>
+              </div>
+
               <div class="report-actions-group">
                 <button type="button" class="btn-scan-main" id="btn-download-pdf-report">
                   <i data-lucide="printer"></i>
                   <span>Download / Print PDF</span>
                 </button>
+                <a href="/api/history/export" class="btn-secondary" id="btn-export-csv-report" download>
+                  <i data-lucide="table"></i>
+                  <span>Export CSV</span>
+                </a>
                 <button type="button" class="btn-secondary" id="btn-export-json-report">
                   <i data-lucide="code"></i>
                   <span>Export JSON</span>
@@ -603,9 +661,10 @@
             <div class="report-preview-container" id="report-preview-container">
               <div class="report-empty-state">
                 <i data-lucide="file-search"></i>
-                <p>Select a scan above or perform a new scan to generate a downloadable Threat Intelligence Report.</p>
+                <p>Select a report type and target scan to generate and preview your Threat Intelligence Report.</p>
               </div>
             </div>
+
           </div>
         </section>
 
