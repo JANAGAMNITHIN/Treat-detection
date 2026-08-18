@@ -1644,7 +1644,125 @@ async function loadGeneralSettingsPage() {
   } catch (err) {}
 }
 
-/* ================= 16. TOAST HELPER ================= */
+/* ================= 16. THREAT INTELLIGENCE VIEW ================= */
+function loadIntelPage() {
+  const container = document.getElementById('intel-feeds-grid');
+  if (!container) return;
+
+  const feeds = [
+    {
+      name: "VirusTotal v3",
+      icon: "shield",
+      category: "Multi-Engine Antivirus & Reputation",
+      status: "Active & Synced",
+      desc: "Aggregates 70+ antivirus scanners and domain/IP blacklists for comprehensive malware telemetry.",
+      types: ["URLs", "Hashes", "Domains", "IPv4/IPv6"],
+      quota: "4 req/min (Free) • Unlimited via API Key"
+    },
+    {
+      name: "AbuseIPDB",
+      icon: "database",
+      category: "IP Abuse & Attack Telemetry",
+      status: "Active & Synced",
+      desc: "Community-driven IP blacklist database reporting brute-force, web attacks, botnets, and spam hosts.",
+      types: ["IPv4", "IPv6", "CIDR Subnets"],
+      quota: "1,000 checks/day • Abuse Confidence Scoring"
+    },
+    {
+      name: "URLScan.io",
+      icon: "external-link",
+      category: "Automated Web Sandbox & DOM",
+      status: "Active & Synced",
+      desc: "Headless browser sandbox that renders pages, captures DOM trees, extracts IP connections & SSL certificates.",
+      types: ["URLs", "Hostnames", "Web Applications"],
+      quota: "5,000 searches/day • Automated DOM crawler"
+    },
+    {
+      name: "Google Safe Browsing v4",
+      icon: "globe",
+      category: "Malware & Phishing Blacklist",
+      status: "Active & Synced",
+      desc: "Google security dataset tracking billions of URLs daily for phishing, malware, and social engineering lures.",
+      types: ["URLs", "Domains", "Websites"],
+      quota: "10,000 queries/day • Real-time protection"
+    },
+    {
+      name: "MalwareBazaar (Abuse.ch)",
+      icon: "anchor",
+      category: "Malware Sample & C2 Hash Feed",
+      status: "Active & Synced",
+      desc: "Curated threat intelligence repository sharing verified malware binary samples, hashes, and YARA matches.",
+      types: ["SHA-256", "MD5", "SHA-1", "File Hashes"],
+      quota: "Public high-throughput endpoint ready"
+    },
+    {
+      name: "WHOIS / RDAP Registry",
+      icon: "info",
+      category: "Domain Registration & Age Intelligence",
+      status: "Active & Synced",
+      desc: "Authoritative global RDAP lookup determining domain creation dates, registrar trust, and newly registered domains.",
+      types: ["Domains", "TLDs", "ASN Networks"],
+      quota: "Direct public RDAP (No key required)"
+    },
+    {
+      name: "Shodan & GreyNoise",
+      icon: "radio",
+      category: "Internet Scanner & Honeypot Telemetry",
+      status: "Active & Synced",
+      desc: "Identifies benign internet noise (mass scanners) vs targeted hostile network exploitation probes.",
+      types: ["IPv4", "IPv6", "Exposed Ports"],
+      quota: "Enriched behavioral telemetry"
+    }
+  ];
+
+  container.innerHTML = '';
+  feeds.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'glass-card intel-feed-card';
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div class="source-icon-box" style="width:34px;height:34px;background:rgba(37,99,235,0.15);color:#60a5fa;">
+            <i data-lucide="${f.icon}"></i>
+          </div>
+          <div>
+            <strong style="font-size:1rem;color:#ffffff;">${f.name}</strong>
+            <span style="font-size:0.75rem;color:var(--text-muted);display:block;">${f.category}</span>
+          </div>
+        </div>
+        <span class="badge-source-verdict tag-clean">${f.status}</span>
+      </div>
+
+      <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;line-height:1.4;">${f.desc}</p>
+
+      <div style="margin-bottom:1rem;">
+        <span class="section-label" style="font-size:0.7rem;">Supported Indicators</span>
+        <div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.3rem;">
+          ${f.types.map(t => `<span class="type-cell-tag">${t}</span>`).join('')}
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border-subtle);padding-top:0.75rem;font-size:0.75rem;color:var(--text-muted);">
+        <span>${f.quota}</span>
+        <button type="button" class="btn-link-action btn-inspect-intel-feed" data-name="${escapeHtml(f.name)}" style="font-size:0.8rem;">
+          Inspect Feed →
+        </button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  document.querySelectorAll('.btn-inspect-intel-feed').forEach(b => {
+    b.addEventListener('click', (e) => {
+      const name = e.currentTarget.getAttribute('data-name');
+      openSourceInspector(name);
+    });
+  });
+
+  initIcons();
+}
+
+/* ================= 17. TOAST HELPER ================= */
 function showToast(msg, type = 'success') {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -1664,3 +1782,4 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+

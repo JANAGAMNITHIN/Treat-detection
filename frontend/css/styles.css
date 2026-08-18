@@ -1476,7 +1476,24 @@ code, pre {
   color: #ffffff;
 }
 
-/* ================= 6. API INTEGRATIONS VIEW ================= */
+/* ================= 6. THREAT INTEL & API INTEGRATIONS VIEW ================= */
+.intel-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.25rem;
+}
+
+.intel-feed-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.intel-feed-card:hover {
+  border-color: rgba(37, 99, 235, 0.4);
+}
+
 .api-grid-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
