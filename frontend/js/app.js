@@ -639,7 +639,7 @@ Authentication-Results: mx.google.com;
        spf=fail (google.com: domain of alert@legit-bank.com does not designate 198.51.100.33 as permitted sender)
        dmarc=fail (p=REJECT)
 Return-Path: <bounce@spoof-gateway.net>
-From: "Security Operations Center" <alert@legit-bank.com>
+From: "Security Team" <alert@legit-bank.com>
 Subject: Action Required: Unauthorized login attempt detected on your corporate account
 Date: Wed, 12 Aug 2026 14:22:00 +0000
 Message-ID: <threat-987654@spoof-gateway.net>

@@ -1,6 +1,6 @@
 # ThreatScope — Unified Threat Detection Tool (Multi-IOC Scanner)
 
-**ThreatScope** is a full-stack unified threat intelligence and Indicator of Compromise (IOC) scanning platform. It accepts any IOC type (IPs, URLs, Domains, Hashes, Files, Emails, and raw RFC 5322 headers), automatically refangs indicators for multi-provider querying, aggregates results into a weighted risk score (0–100) and categorical verdict, performs cascading email sub-scans, and caches findings with a SOC analyst interface.
+**ThreatScope** is a full-stack unified threat intelligence and Indicator of Compromise (IOC) scanning platform. It accepts any IOC type (IPs, URLs, Domains, Hashes, Files, Emails, and raw RFC 5322 headers), automatically refangs indicators for multi-provider querying, aggregates results into a weighted risk score (0–100) and categorical verdict, performs cascading email sub-scans, and caches findings with a unified threat intelligence interface.
 
 ---
 
