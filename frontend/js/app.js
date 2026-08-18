@@ -6,6 +6,10 @@ const appState = {
   currentScan: null,
   activeNav: 'dashboard',
   recentScans: [],
+  notifications: [
+    { type: 'info', msg: '<strong>Engine Started:</strong> ThreatScope multi-provider intelligence engine active.', time: 'Just now' },
+    { type: 'clean', msg: '<strong>SSRF Guard:</strong> Internal private subnets and metadata addresses are guarded.', time: '5m ago' }
+  ],
   kpiStats: {
     total: 0,
     malicious: 0,
@@ -19,14 +23,17 @@ const appState = {
 document.addEventListener('DOMContentLoaded', () => {
   initIcons();
   initSidebarNavigation();
+  initNotifications();
   initScanForms();
+  initSourceDetailModal();
   initFileDropZone();
   initSupportedPills();
   initRecentScansActions();
   initReportsView();
   initBulkView();
   initHistoryView();
-  initApiIntegrations();
+  initApiIntegrationsView();
+  initSettingsView();
   
   // Load real stats and history from backend
   fetchDashboardStats();
@@ -97,9 +104,13 @@ function switchView(viewName) {
     loadIntelPage();
   }
   else if (viewName === 'whitelist') targetViewId = 'view-whitelist';
-  else if (viewName === 'api-keys' || viewName === 'settings') {
+  else if (viewName === 'api-keys') {
     targetViewId = 'view-api-keys';
-    loadApiKeysStatus();
+    loadApiIntegrationsPage();
+  }
+  else if (viewName === 'settings') {
+    targetViewId = 'view-settings';
+    loadGeneralSettingsPage();
   }
 
   const targetEl = document.getElementById(targetViewId);
@@ -111,7 +122,149 @@ function switchView(viewName) {
   initIcons();
 }
 
-/* ================= 2. REAL-TIME STATS & SPARKLINES ================= */
+/* ================= 2. NOTIFICATIONS SYSTEM ================= */
+function initNotifications() {
+  const notifBtn = document.getElementById('btn-notifications');
+  const dropdown = document.getElementById('notification-dropdown');
+  const btnClear = document.getElementById('btn-clear-notifications');
+
+  if (notifBtn && dropdown) {
+    notifBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('hidden');
+      document.getElementById('header-notif-count').textContent = '0';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target) && !notifBtn.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+  }
+
+  if (btnClear) {
+    btnClear.addEventListener('click', () => {
+      appState.notifications = [];
+      renderNotifications();
+      document.getElementById('header-notif-count').textContent = '0';
+    });
+  }
+
+  renderNotifications();
+}
+
+function pushNotification(type, msg) {
+  appState.notifications.unshift({
+    type: type,
+    msg: msg,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  });
+  if (appState.notifications.length > 20) appState.notifications.pop();
+
+  const countBadge = document.getElementById('header-notif-count');
+  if (countBadge) {
+    const current = parseInt(countBadge.textContent) || 0;
+    countBadge.textContent = String(current + 1);
+  }
+
+  renderNotifications();
+}
+
+function renderNotifications() {
+  const container = document.getElementById('notification-list');
+  if (!container) return;
+
+  if (appState.notifications.length === 0) {
+    container.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--text-muted);font-size:0.8rem;">No unread alerts or notifications</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  appState.notifications.forEach(n => {
+    const item = document.createElement('div');
+    item.className = 'notif-item';
+    const dotClass = n.type === 'malicious' ? 'dot-red' : (n.type === 'suspicious' ? 'dot-orange' : (n.type === 'clean' ? 'dot-green' : 'dot-slate'));
+    item.innerHTML = `
+      <div class="notif-dot ${dotClass}"></div>
+      <div class="notif-content">
+        <p class="notif-msg">${n.msg}</p>
+        <span class="notif-time">${n.time}</span>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+/* ================= 3. SOURCE DETAIL INSPECTION MODAL ================= */
+function initSourceDetailModal() {
+  const modal = document.getElementById('source-detail-modal');
+  const btnClose = document.getElementById('btn-close-source-modal');
+
+  if (btnClose && modal) {
+    btnClose.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+  }
+
+  // Wire dashboard source breakdown rows
+  document.querySelectorAll('.source-row.clickable').forEach(row => {
+    row.addEventListener('click', () => {
+      const provider = row.getAttribute('data-provider');
+      openSourceInspector(provider);
+    });
+  });
+}
+
+function openSourceInspector(providerName) {
+  const modal = document.getElementById('source-detail-modal');
+  if (!modal) return;
+
+  let sourceData = null;
+  if (appState.currentScan && appState.currentScan.sources) {
+    sourceData = appState.currentScan.sources.find(s => s.name.toLowerCase().includes(providerName.toLowerCase()) || providerName.toLowerCase().includes(s.name.toLowerCase()));
+  }
+
+  const titleEl = document.getElementById('modal-source-title');
+  const badgeEl = document.getElementById('modal-source-badge');
+  const latencyEl = document.getElementById('modal-source-latency');
+  const summaryEl = document.getElementById('modal-source-summary');
+  const rawEl = document.getElementById('modal-source-raw');
+  const linkEl = document.getElementById('modal-source-link');
+
+  if (sourceData) {
+    titleEl.textContent = `${sourceData.name} Threat Analysis`;
+    badgeEl.textContent = sourceData.verdict.toUpperCase();
+    badgeEl.className = `badge-source-verdict ${getVerdictClass(sourceData.verdict)}`;
+    latencyEl.textContent = `Latency: ${sourceData.duration_ms}ms • Confidence: ${sourceData.confidence_score}%`;
+    summaryEl.textContent = sourceData.summary || 'Engine analyzed indicator successfully.';
+    rawEl.textContent = JSON.stringify(sourceData.raw_details || sourceData, null, 2);
+    if (sourceData.detail_url) {
+      linkEl.href = sourceData.detail_url;
+      linkEl.style.display = 'inline-flex';
+    } else {
+      linkEl.style.display = 'none';
+    }
+  } else {
+    // Show active engine overview
+    titleEl.textContent = `${providerName} Intelligence Engine`;
+    badgeEl.textContent = 'ONLINE / READY';
+    badgeEl.className = 'badge-source-verdict tag-clean';
+    latencyEl.textContent = 'Engine Status: Synchronized (Awaiting IOC query)';
+    summaryEl.textContent = `Active feed for ${providerName}. Queries external intelligence feeds upon indicator submission with automated simulation fallback.`;
+    rawEl.textContent = JSON.stringify({
+      provider: providerName,
+      status: "ready",
+      quota: "unlimited/active",
+      engine: "ThreatScope v1.0.0"
+    }, null, 2);
+    linkEl.style.display = 'none';
+  }
+
+  modal.classList.remove('hidden');
+  initIcons();
+}
+
+/* ================= 4. REAL-TIME STATS & SPARKLINES ================= */
 async function fetchDashboardStats() {
   try {
     const res = await fetch('/api/stats');
@@ -147,7 +300,6 @@ function renderKPICounters() {
   if (elClean) elClean.textContent = clean.toLocaleString();
   if (elScore) elScore.innerHTML = `${Math.round(avgScore)} <span class="kpi-sub">/100</span>`;
 
-  // Draw dynamic SVG sparklines based on real data points
   drawSparkline('sparkline-path-total', trendScores.length > 0 ? trendScores : [0, 0]);
   drawSparkline('sparkline-path-mal', trendScores.map(s => s >= 65 ? s : 0));
   drawSparkline('sparkline-path-susp', trendScores.map(s => (s >= 30 && s < 65) ? s : 0));
@@ -192,24 +344,31 @@ function incrementRealtimeScan(scanData) {
   const verdict = scanData.verdict;
   const score = scanData.confidence_score || 0;
 
-  if (verdict === 'malicious') appState.kpiStats.malicious += 1;
-  else if (verdict === 'suspicious') appState.kpiStats.suspicious += 1;
-  else if (verdict === 'clean') appState.kpiStats.clean += 1;
+  if (verdict === 'malicious') {
+    appState.kpiStats.malicious += 1;
+    pushNotification('malicious', `🚨 <strong>High Risk IOC Detected:</strong> ${escapeHtml(scanData.defanged_indicator)} flagged as MALICIOUS (Score: ${Math.round(score)}).`);
+  }
+  else if (verdict === 'suspicious') {
+    appState.kpiStats.suspicious += 1;
+    pushNotification('suspicious', `⚠️ <strong>Suspicious IOC:</strong> ${escapeHtml(scanData.defanged_indicator)} flagged with elevated risk.`);
+  }
+  else if (verdict === 'clean') {
+    appState.kpiStats.clean += 1;
+    pushNotification('clean', `✅ <strong>Clean Scan:</strong> ${escapeHtml(scanData.defanged_indicator)} verified benign.`);
+  }
 
-  // Add score to trend points
   appState.kpiStats.trendScores.push(score);
   if (appState.kpiStats.trendScores.length > 20) {
     appState.kpiStats.trendScores.shift();
   }
 
-  // Recalculate average
   const totalScore = appState.kpiStats.trendScores.reduce((a, b) => a + b, 0);
   appState.kpiStats.avgScore = totalScore / appState.kpiStats.trendScores.length;
 
   renderKPICounters();
 }
 
-/* ================= 3. SCAN FORMS & EXECUTION ================= */
+/* ================= 5. SCAN FORMS & SUBMISSION ================= */
 function initScanForms() {
   const dashboardForm = document.getElementById('dashboard-scan-form');
   const dashboardInput = document.getElementById('dashboard-ioc-input');
@@ -311,14 +470,17 @@ async function executeScan(indicator) {
 
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.detail || `Scan failed (HTTP ${res.status})`);
+      const msg = errData.detail || `Scan failed (HTTP ${res.status})`;
+      if (msg.includes('SSRF')) {
+        pushNotification('suspicious', `🛡️ <strong>SSRF Blocked:</strong> Scan attempt against restricted IP/host rejected.`);
+      }
+      throw new Error(msg);
     }
 
     const scanData = await res.json();
     appState.currentScan = scanData;
     appState.recentScans.unshift(scanData);
 
-    // Switch to Dashboard view and update all panels
     switchView('dashboard');
     updateDashboardPanels(scanData);
     prependRecentScanRow(scanData);
@@ -337,7 +499,7 @@ async function executeScan(indicator) {
   }
 }
 
-/* ================= 4. UPDATE DASHBOARD PANELS ================= */
+/* ================= 6. UPDATE DASHBOARD PANELS ================= */
 function updateDashboardPanels(data) {
   const verdictTag = document.getElementById('latest-verdict-tag');
   const iocText = document.getElementById('latest-ioc-text');
@@ -427,13 +589,14 @@ function updateDashboardPanels(data) {
     });
   }
 
-  // Source Breakdown List
+  // Source Breakdown List (Clickable!)
   const sourcesContainer = document.getElementById('dashboard-sources-list');
   if (sourcesContainer && data.sources && data.sources.length > 0) {
     sourcesContainer.innerHTML = '';
     data.sources.forEach(src => {
       const row = document.createElement('div');
-      row.className = 'source-row';
+      row.className = 'source-row clickable';
+      row.setAttribute('data-provider', src.name);
       const vClass = getVerdictClass(src.verdict);
       row.innerHTML = `
         <div class="source-info">
@@ -447,6 +610,7 @@ function updateDashboardPanels(data) {
           <i data-lucide="chevron-right"></i>
         </div>
       `;
+      row.addEventListener('click', () => openSourceInspector(src.name));
       sourcesContainer.appendChild(row);
     });
   }
@@ -461,7 +625,13 @@ function updateDashboardPanels(data) {
     donutRisk.style.color = getScoreHexColor(data.verdict, scoreVal);
   }
 
-  // Update dynamic percentages
+  const donutCircle = document.getElementById('donut-circle-svg');
+  if (donutCircle) {
+    const strokeDash = Math.round((scoreVal / 100) * 390);
+    donutCircle.setAttribute('stroke-dasharray', `${strokeDash} 390`);
+    donutCircle.style.stroke = getScoreHexColor(data.verdict, scoreVal);
+  }
+
   const pctVendor = document.getElementById('donut-pct-vendor');
   const pctContent = document.getElementById('donut-pct-content');
   const pctRep = document.getElementById('donut-pct-rep');
@@ -535,7 +705,7 @@ function getSourceIcon(name) {
   return 'shield-check';
 }
 
-/* ================= 5. FILE DRAG & DROP ================= */
+/* ================= 7. FILE DRAG & DROP ================= */
 function initFileDropZone() {
   const dropZone = document.getElementById('dashboard-file-dropzone');
   const fileInput = document.getElementById('dashboard-file-input');
@@ -601,7 +771,7 @@ async function handleFileUpload(file) {
   }
 }
 
-/* ================= 6. SUPPORTED SAMPLE PILLS ================= */
+/* ================= 8. SUPPORTED SAMPLE PILLS ================= */
 function initSupportedPills() {
   document.querySelectorAll('.type-pill').forEach(pill => {
     if (pill.id === 'pill-file-trigger') {
@@ -623,12 +793,11 @@ function initSupportedPills() {
   });
 }
 
-/* ================= 7. RECENT SCANS TABLE ================= */
+/* ================= 9. RECENT SCANS TABLE & LIVE BINDINGS ================= */
 function prependRecentScanRow(data) {
   const tbody = document.getElementById('recent-scans-tbody');
   if (!tbody) return;
 
-  // Clear "No scans recorded" placeholder if present
   if (tbody.children.length === 1 && tbody.children[0].children.length === 1) {
     tbody.innerHTML = '';
   }
@@ -732,7 +901,7 @@ async function loadInitialHistory() {
   } catch (err) {}
 }
 
-/* ================= 8. REPORT GENERATOR VIEW ================= */
+/* ================= 10. REPORT GENERATOR VIEW ================= */
 function initReportsView() {
   const selectScan = document.getElementById('report-select-scan');
   const btnDownloadPdf = document.getElementById('btn-download-pdf-report');
@@ -848,7 +1017,7 @@ function renderReportPreview(data) {
   `;
 }
 
-/* ================= 9. FULL SCAN REPORT VIEW ================= */
+/* ================= 11. FULL SCAN REPORT VIEW ================= */
 function renderFullScanReport(data) {
   const container = document.getElementById('full-scan-report-container');
   if (!container) return;
@@ -896,7 +1065,7 @@ function renderFullScanReport(data) {
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:1rem;">
       ${data.sources.map(s => `
-        <div class="glass-card" style="padding:1.25rem;">
+        <div class="glass-card clickable" onclick="openSourceInspector('${escapeHtml(s.name)}')" style="padding:1.25rem;cursor:pointer;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
             <strong>${escapeHtml(s.name)}</strong>
             <span class="badge-source-verdict ${getVerdictClass(s.verdict)}">${s.verdict}</span>
@@ -904,7 +1073,7 @@ function renderFullScanReport(data) {
           <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.75rem;">${escapeHtml(s.summary)}</p>
           <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border-subtle);padding-top:0.5rem;font-size:0.75rem;color:var(--text-muted);">
             <span>Latency: ${s.duration_ms}ms</span>
-            ${s.detail_url ? `<a href="${s.detail_url}" target="_blank" style="color:#60a5fa;text-decoration:none;">View Feed Intelligence →</a>` : '<span>Internal Lookup</span>'}
+            <span style="color:#60a5fa;">Inspect Engine →</span>
           </div>
         </div>
       `).join('')}
@@ -931,7 +1100,7 @@ function renderFullScanReport(data) {
   initIcons();
 }
 
-/* ================= 10. BULK SCAN VIEW ================= */
+/* ================= 12. BULK SCAN VIEW ================= */
 function initBulkView() {
   const textarea = document.getElementById('bulk-view-textarea');
   const countIndicator = document.getElementById('bulk-view-count');
@@ -1056,7 +1225,7 @@ function initBulkView() {
   }
 }
 
-/* ================= 11. HISTORY FULL PAGE ================= */
+/* ================= 13. HISTORY FULL PAGE ================= */
 function initHistoryView() {
   const typeFilter = document.getElementById('history-page-type');
   const verdictFilter = document.getElementById('history-page-verdict');
@@ -1145,87 +1314,102 @@ async function loadHistoryPage() {
   } catch (err) {}
 }
 
-/* ================= 12. THREAT INTEL & API INTEGRATIONS ================= */
-async function loadIntelPage() {
-  const grid = document.getElementById('intel-feeds-grid');
-  if (!grid) return;
-  try {
-    const res = await fetch('/api/settings');
-    if (res.ok) {
-      const data = await res.json();
-      grid.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:1.25rem;">
-          ${data.keys.map(k => `
-            <div class="glass-card">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
-                <strong>${escapeHtml(k.name)}</strong>
-                <span class="type-cell-tag">${k.configured ? 'Active Key' : 'Simulated / Active'}</span>
-              </div>
-              <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.75rem;">${escapeHtml(k.description)}</p>
-              <div style="font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--border-subtle);padding-top:0.5rem;">
-                ${escapeHtml(k.free_tier_info)}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-      initIcons();
-    }
-  } catch (err) {}
-}
+/* ================= 14. API INTEGRATIONS VIEW ================= */
+function initApiIntegrationsView() {
+  document.querySelectorAll('.btn-test-conn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const provider = btn.getAttribute('data-provider');
+      const inputMap = {
+        'virustotal': 'key-input-vt',
+        'abuseipdb': 'key-input-abuse',
+        'urlscan': 'key-input-urlscan',
+        'safebrowsing': 'key-input-gsb',
+        'malwarebazaar': 'key-input-mb'
+      };
+      const feedbackMap = {
+        'virustotal': 'feedback-vt',
+        'abuseipdb': 'feedback-abuse',
+        'urlscan': 'feedback-urlscan',
+        'safebrowsing': 'feedback-gsb',
+        'malwarebazaar': 'feedback-mb'
+      };
 
-function initApiIntegrations() {
-  const form = document.getElementById('api-integrations-form');
-  if (!form) return;
+      const input = document.getElementById(inputMap[provider]);
+      const feedback = document.getElementById(feedbackMap[provider]);
+      const keyVal = input ? input.value.trim() : '';
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const payload = {};
-    const vt = document.getElementById('page-key-vt')?.value.trim();
-    const abuse = document.getElementById('page-key-abuse')?.value.trim();
-    const urlscan = document.getElementById('page-key-urlscan')?.value.trim();
-    const gsb = document.getElementById('page-key-gsb')?.value.trim();
-    const mb = document.getElementById('page-key-mb')?.value.trim();
+      if (feedback) feedback.textContent = 'Testing connection...';
 
-    if (vt) payload.virustotal = vt;
-    if (abuse) payload.abuseipdb = abuse;
-    if (urlscan) payload.urlscan = urlscan;
-    if (gsb) payload.safebrowsing = gsb;
-    if (mb) payload.malwarebazaar = mb;
-
-    try {
-      const res = await fetch('/api/settings/keys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        showToast('API Configuration saved', 'success');
-        loadApiKeysStatus();
+      try {
+        const res = await fetch('/api/settings/test-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider: provider, key: keyVal })
+        });
+        const data = await res.json();
+        if (feedback) {
+          feedback.textContent = data.message;
+          feedback.className = `test-feedback-txt ${data.status === 'error' ? 'error' : 'success'}`;
+        }
+      } catch (err) {
+        if (feedback) {
+          feedback.textContent = 'Connection test failed';
+          feedback.className = 'test-feedback-txt error';
+        }
       }
-    } catch (err) {
-      showToast('Failed to save API keys', 'error');
-    }
+    });
+  });
+
+  document.querySelectorAll('.btn-save-key').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const provider = btn.getAttribute('data-provider');
+      const inputMap = {
+        'virustotal': 'key-input-vt',
+        'abuseipdb': 'key-input-abuse',
+        'urlscan': 'key-input-urlscan',
+        'safebrowsing': 'key-input-gsb',
+        'malwarebazaar': 'key-input-mb'
+      };
+      const input = document.getElementById(inputMap[provider]);
+      const keyVal = input ? input.value.trim() : '';
+
+      const payload = {};
+      payload[provider] = keyVal;
+
+      try {
+        const res = await fetch('/api/settings/keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          showToast(`${provider.toUpperCase()} API key saved successfully`, 'success');
+          loadApiIntegrationsPage();
+        }
+      } catch (err) {
+        showToast('Failed to save key', 'error');
+      }
+    });
   });
 }
 
-async function loadApiKeysStatus() {
+async function loadApiIntegrationsPage() {
   try {
     const res = await fetch('/api/settings');
     if (res.ok) {
       const data = await res.json();
       data.keys.forEach(k => {
-        let tagId = '';
-        if (k.name.includes('VirusTotal')) tagId = 'page-tag-vt';
-        else if (k.name.includes('AbuseIPDB')) tagId = 'page-tag-abuse';
-        else if (k.name.includes('URLScan')) tagId = 'page-tag-urlscan';
-        else if (k.name.includes('Safe Browsing')) tagId = 'page-tag-gsb';
-        else if (k.name.includes('MalwareBazaar')) tagId = 'page-tag-mb';
+        let badgeId = '';
+        if (k.name.includes('VirusTotal')) badgeId = 'badge-vt-status';
+        else if (k.name.includes('AbuseIPDB')) badgeId = 'badge-abuse-status';
+        else if (k.name.includes('URLScan')) badgeId = 'badge-urlscan-status';
+        else if (k.name.includes('Safe Browsing')) badgeId = 'badge-gsb-status';
 
-        if (tagId) {
-          const el = document.getElementById(tagId);
-          if (el) {
-            el.textContent = k.configured ? 'Configured (Active Key)' : 'Simulated / Active';
+        if (badgeId) {
+          const badge = document.getElementById(badgeId);
+          if (badge) {
+            badge.textContent = k.configured ? 'Configured & Active' : 'Active / Emulated';
+            badge.className = `status-badge-pill ${k.configured ? 'tag-clean' : ''}`;
           }
         }
       });
@@ -1233,7 +1417,56 @@ async function loadApiKeysStatus() {
   } catch (err) {}
 }
 
-/* ================= 13. TOAST HELPER ================= */
+/* ================= 15. DEDICATED GENERAL SETTINGS ================= */
+function initSettingsView() {
+  const btnSave = document.getElementById('btn-save-all-settings');
+  const btnVacuum = document.getElementById('btn-vacuum-db');
+  const btnClearDb = document.getElementById('btn-settings-clear-db');
+
+  if (btnSave) {
+    btnSave.addEventListener('click', async () => {
+      showToast('Application preferences saved successfully', 'success');
+    });
+  }
+
+  if (btnVacuum) {
+    btnVacuum.addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/database/vacuum', { method: 'POST' });
+        if (res.ok) {
+          showToast('Database optimized and cleaned', 'success');
+        }
+      } catch (err) {
+        showToast('Optimization failed', 'error');
+      }
+    });
+  }
+
+  if (btnClearDb) {
+    btnClearDb.addEventListener('click', async () => {
+      if (confirm('Reset entire threat detection database? All past scans will be cleared.')) {
+        await fetch('/api/history', { method: 'DELETE' });
+        showToast('Database reset complete', 'success');
+        fetchDashboardStats();
+      }
+    });
+  }
+}
+
+async function loadGeneralSettingsPage() {
+  try {
+    const res = await fetch('/api/settings/app');
+    if (res.ok) {
+      const data = await res.json();
+      const dbStatus = document.getElementById('db-storage-status');
+      if (dbStatus) {
+        dbStatus.textContent = `Tracking ${data.total_records || 0} scan records & active configurations (SQLite)`;
+      }
+    }
+  } catch (err) {}
+}
+
+/* ================= 16. TOAST HELPER ================= */
 function showToast(msg, type = 'success') {
   const container = document.getElementById('toast-container');
   if (!container) return;

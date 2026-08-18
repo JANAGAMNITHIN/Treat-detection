@@ -105,10 +105,40 @@
         </div>
 
         <div class="top-header-actions">
-          <button class="icon-action-btn notification-btn" title="Alerts & Notifications" id="btn-notifications">
-            <i data-lucide="bell"></i>
-            <span class="badge-count" id="header-notif-count">0</span>
-          </button>
+          <div class="notification-wrapper">
+            <button class="icon-action-btn notification-btn" title="Alerts & Notifications" id="btn-notifications">
+              <i data-lucide="bell"></i>
+              <span class="badge-count" id="header-notif-count">2</span>
+            </button>
+
+            <!-- Notifications Floating Dropdown -->
+            <div class="notification-dropdown hidden" id="notification-dropdown">
+              <div class="notif-header">
+                <div class="notif-title-row">
+                  <i data-lucide="bell-ring"></i>
+                  <strong>Threat Alerts & Events</strong>
+                </div>
+                <button class="btn-text-sm" id="btn-clear-notifications">Clear All</button>
+              </div>
+              <div class="notif-list" id="notification-list">
+                <div class="notif-item unread">
+                  <div class="notif-dot dot-red"></div>
+                  <div class="notif-content">
+                    <p class="notif-msg"><strong>Engine Started:</strong> ThreatScope multi-provider intelligence engine active and listening on port 8000.</p>
+                    <span class="notif-time">Just now</span>
+                  </div>
+                </div>
+                <div class="notif-item">
+                  <div class="notif-dot dot-green"></div>
+                  <div class="notif-content">
+                    <p class="notif-msg"><strong>SSRF Guard:</strong> Internal private subnets and metadata addresses are guarded.</p>
+                    <span class="notif-time">5 minutes ago</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <button class="icon-action-btn" title="Documentation & Help" id="btn-help">
             <i data-lucide="help-circle"></i>
           </button>
@@ -124,7 +154,7 @@
         <!-- ================= VIEW 1: DASHBOARD (MAIN VIEW) ================= -->
         <section id="view-dashboard" class="app-view active">
           
-          <!-- 1. KPI Stats Metric Cards Row (5 Cards) - Dynamic real-time values -->
+          <!-- 1. KPI Stats Metric Cards Row (5 Cards) -->
           <div class="kpi-grid">
             
             <!-- KPI 1: Total Scans -->
@@ -379,49 +409,50 @@
               </div>
             </div>
 
-            <!-- Column 2: Source Breakdown List -->
+            <!-- Column 2: Source Breakdown List (Clickable to inspect each engine) -->
             <div class="glass-card sources-panel-card">
               <div class="panel-header-row">
                 <h2>Source Breakdown</h2>
+                <span class="text-muted" style="font-size:0.75rem;">Click engine to inspect</span>
               </div>
 
               <div class="sources-list" id="dashboard-sources-list">
-                <div class="source-row">
+                <div class="source-row clickable" data-provider="VirusTotal">
                   <div class="source-info">
                     <div class="source-icon-box"><i data-lucide="shield"></i></div>
                     <span class="source-name">VirusTotal</span>
                   </div>
                   <div class="source-verdict-right"><span class="badge-source-verdict tag-clean">Ready</span><i data-lucide="chevron-right"></i></div>
                 </div>
-                <div class="source-row">
+                <div class="source-row clickable" data-provider="Google Safe Browsing">
                   <div class="source-info">
                     <div class="source-icon-box"><i data-lucide="globe"></i></div>
                     <span class="source-name">Google Safe Browsing</span>
                   </div>
                   <div class="source-verdict-right"><span class="badge-source-verdict tag-clean">Ready</span><i data-lucide="chevron-right"></i></div>
                 </div>
-                <div class="source-row">
+                <div class="source-row clickable" data-provider="URLScan.io">
                   <div class="source-info">
                     <div class="source-icon-box"><i data-lucide="external-link"></i></div>
                     <span class="source-name">URLScan.io</span>
                   </div>
                   <div class="source-verdict-right"><span class="badge-source-verdict tag-clean">Ready</span><i data-lucide="chevron-right"></i></div>
                 </div>
-                <div class="source-row">
+                <div class="source-row clickable" data-provider="MalwareBazaar">
                   <div class="source-info">
                     <div class="source-icon-box"><i data-lucide="anchor"></i></div>
                     <span class="source-name">MalwareBazaar / PhishTank</span>
                   </div>
                   <div class="source-verdict-right"><span class="badge-source-verdict tag-clean">Ready</span><i data-lucide="chevron-right"></i></div>
                 </div>
-                <div class="source-row">
+                <div class="source-row clickable" data-provider="AbuseIPDB">
                   <div class="source-info">
                     <div class="source-icon-box"><i data-lucide="database"></i></div>
                     <span class="source-name">AbuseIPDB</span>
                   </div>
                   <div class="source-verdict-right"><span class="badge-source-verdict tag-clean">Ready</span><i data-lucide="chevron-right"></i></div>
                 </div>
-                <div class="source-row">
+                <div class="source-row clickable" data-provider="WHOIS / RDAP">
                   <div class="source-info">
                     <div class="source-icon-box"><i data-lucide="info"></i></div>
                     <span class="source-name">Domain Age (WHOIS/RDAP)</span>
@@ -451,7 +482,7 @@
                   <div class="donut-svg-container">
                     <svg viewBox="0 0 160 160" class="donut-svg">
                       <circle cx="80" cy="80" r="62" class="donut-bg-ring"></circle>
-                      <circle cx="80" cy="80" r="62" class="donut-seg-green" stroke-dasharray="0 390" stroke-dashoffset="0"></circle>
+                      <circle cx="80" cy="80" r="62" class="donut-seg-green" id="donut-circle-svg" stroke-dasharray="0 390" stroke-dashoffset="0"></circle>
                     </svg>
                     <div class="donut-center-content">
                       <span class="donut-big-num" id="donut-score-val">0</span>
@@ -655,7 +686,7 @@
         <section id="view-history" class="app-view">
           <div class="view-header-title">
             <h2>Scan History & Audit Logs</h2>
-            <p>Review and search past threat analyses stored in your local persistent database.</p>
+            <p>Review, filter, and search past threat analyses stored in your local persistent database.</p>
           </div>
 
           <div class="glass-card history-card-view">
@@ -737,61 +768,269 @@
         <section id="view-api-keys" class="app-view">
           <div class="view-header-title">
             <h2>Threat Intelligence API Integrations</h2>
-            <p>Configure custom API keys for VirusTotal, AbuseIPDB, URLScan.io, Google Safe Browsing, and MalwareBazaar.</p>
+            <p>Manage external threat intelligence credentials. Test connectivity and verify API quotas.</p>
           </div>
 
           <div class="glass-card api-settings-card">
-            <form id="api-integrations-form" class="keys-form">
-              <div class="form-field">
-                <div class="field-label-row">
-                  <label for="page-key-vt">VirusTotal API Key:</label>
-                  <span class="key-status-tag" id="page-tag-vt">Simulated / Active</span>
+            <div class="api-grid-cards">
+              
+              <!-- Card 1: VirusTotal -->
+              <div class="api-provider-box">
+                <div class="provider-box-header">
+                  <div class="provider-title-group">
+                    <i data-lucide="shield" class="provider-icon"></i>
+                    <div>
+                      <strong>VirusTotal v3 API</strong>
+                      <span class="provider-sub">Multi-engine antivirus & reputation feed</span>
+                    </div>
+                  </div>
+                  <span class="status-badge-pill" id="badge-vt-status">Active / Emulated</span>
                 </div>
-                <input type="password" id="page-key-vt" placeholder="Enter VirusTotal v3 API key..." autocomplete="off">
+                <div class="provider-input-row">
+                  <input type="password" id="key-input-vt" placeholder="Enter 64-character VirusTotal API Key..." class="form-input">
+                  <button type="button" class="btn-secondary btn-sm btn-test-conn" data-provider="virustotal">Test Key</button>
+                  <button type="button" class="btn-scan-main btn-sm btn-save-key" data-provider="virustotal">Save</button>
+                </div>
+                <span class="test-feedback-txt" id="feedback-vt"></span>
               </div>
 
-              <div class="form-field">
-                <div class="field-label-row">
-                  <label for="page-key-abuse">AbuseIPDB API Key:</label>
-                  <span class="key-status-tag" id="page-tag-abuse">Simulated / Active</span>
+              <!-- Card 2: AbuseIPDB -->
+              <div class="api-provider-box">
+                <div class="provider-box-header">
+                  <div class="provider-title-group">
+                    <i data-lucide="database" class="provider-icon"></i>
+                    <div>
+                      <strong>AbuseIPDB API</strong>
+                      <span class="provider-sub">Global IP reputation and abuse reporting dataset</span>
+                    </div>
+                  </div>
+                  <span class="status-badge-pill" id="badge-abuse-status">Active / Emulated</span>
                 </div>
-                <input type="password" id="page-key-abuse" placeholder="Enter AbuseIPDB API key..." autocomplete="off">
+                <div class="provider-input-row">
+                  <input type="password" id="key-input-abuse" placeholder="Enter AbuseIPDB API Key..." class="form-input">
+                  <button type="button" class="btn-secondary btn-sm btn-test-conn" data-provider="abuseipdb">Test Key</button>
+                  <button type="button" class="btn-scan-main btn-sm btn-save-key" data-provider="abuseipdb">Save</button>
+                </div>
+                <span class="test-feedback-txt" id="feedback-abuse"></span>
               </div>
 
-              <div class="form-field">
-                <div class="field-label-row">
-                  <label for="page-key-urlscan">URLScan.io API Key:</label>
-                  <span class="key-status-tag" id="page-tag-urlscan">Simulated / Active</span>
+              <!-- Card 3: URLScan.io -->
+              <div class="api-provider-box">
+                <div class="provider-box-header">
+                  <div class="provider-title-group">
+                    <i data-lucide="external-link" class="provider-icon"></i>
+                    <div>
+                      <strong>URLScan.io API</strong>
+                      <span class="provider-sub">Automated webpage DOM sandbox & screenshot scanner</span>
+                    </div>
+                  </div>
+                  <span class="status-badge-pill" id="badge-urlscan-status">Active / Emulated</span>
                 </div>
-                <input type="password" id="page-key-urlscan" placeholder="Enter URLScan.io API key..." autocomplete="off">
+                <div class="provider-input-row">
+                  <input type="password" id="key-input-urlscan" placeholder="Enter URLScan.io API Key..." class="form-input">
+                  <button type="button" class="btn-secondary btn-sm btn-test-conn" data-provider="urlscan">Test Key</button>
+                  <button type="button" class="btn-scan-main btn-sm btn-save-key" data-provider="urlscan">Save</button>
+                </div>
+                <span class="test-feedback-txt" id="feedback-urlscan"></span>
               </div>
 
-              <div class="form-field">
-                <div class="field-label-row">
-                  <label for="page-key-gsb">Google Safe Browsing Key:</label>
-                  <span class="key-status-tag" id="page-tag-gsb">Simulated / Active</span>
+              <!-- Card 4: Google Safe Browsing -->
+              <div class="api-provider-box">
+                <div class="provider-box-header">
+                  <div class="provider-title-group">
+                    <i data-lucide="globe" class="provider-icon"></i>
+                    <div>
+                      <strong>Google Safe Browsing v4</strong>
+                      <span class="provider-sub">Malware, phishing & deceptive software blacklist</span>
+                    </div>
+                  </div>
+                  <span class="status-badge-pill" id="badge-gsb-status">Active / Emulated</span>
                 </div>
-                <input type="password" id="page-key-gsb" placeholder="Enter Google Cloud Safe Browsing key..." autocomplete="off">
+                <div class="provider-input-row">
+                  <input type="password" id="key-input-gsb" placeholder="Enter Google Cloud API Key..." class="form-input">
+                  <button type="button" class="btn-secondary btn-sm btn-test-conn" data-provider="safebrowsing">Test Key</button>
+                  <button type="button" class="btn-scan-main btn-sm btn-save-key" data-provider="safebrowsing">Save</button>
+                </div>
+                <span class="test-feedback-txt" id="feedback-gsb"></span>
               </div>
 
-              <div class="form-field">
-                <div class="field-label-row">
-                  <label for="page-key-mb">MalwareBazaar Auth-Key (Optional):</label>
-                  <span class="key-status-tag" id="page-tag-mb">Public Access</span>
+              <!-- Card 5: MalwareBazaar -->
+              <div class="api-provider-box">
+                <div class="provider-box-header">
+                  <div class="provider-title-group">
+                    <i data-lucide="anchor" class="provider-icon"></i>
+                    <div>
+                      <strong>MalwareBazaar (Abuse.ch)</strong>
+                      <span class="provider-sub">Known malware samples, SHA-256 hashes & C2 tracker</span>
+                    </div>
+                  </div>
+                  <span class="status-badge-pill tag-clean">Public Endpoint Ready</span>
                 </div>
-                <input type="password" id="page-key-mb" placeholder="Enter Abuse.ch Auth-Key..." autocomplete="off">
+                <div class="provider-input-row">
+                  <input type="password" id="key-input-mb" placeholder="Optional Abuse.ch Auth-Key..." class="form-input">
+                  <button type="button" class="btn-secondary btn-sm btn-test-conn" data-provider="malwarebazaar">Test Key</button>
+                  <button type="button" class="btn-scan-main btn-sm btn-save-key" data-provider="malwarebazaar">Save</button>
+                </div>
+                <span class="test-feedback-txt" id="feedback-mb"></span>
               </div>
 
-              <div class="form-actions-right">
-                <button type="submit" class="btn-scan-main">Save API Integrations</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 9: DEDICATED GENERAL SETTINGS ================= -->
+        <section id="view-settings" class="app-view">
+          <div class="view-header-title">
+            <h2>Application & Engine Settings</h2>
+            <p>Configure cache retention, SSRF safety guards, scoring consensus thresholds, and database maintenance.</p>
+          </div>
+
+          <div class="settings-sections-grid">
+            
+            <!-- Section 1: Cache & Performance -->
+            <div class="glass-card">
+              <div class="panel-header-row">
+                <h2>Cache & Performance Policy</h2>
               </div>
-            </form>
+              <div class="settings-field-group">
+                <div class="field-item">
+                  <label for="setting-cache-ttl">Cache Expiration Window (TTL):</label>
+                  <select id="setting-cache-ttl" class="form-select">
+                    <option value="24" selected>24 Hours (Recommended)</option>
+                    <option value="48">48 Hours</option>
+                    <option value="168">7 Days</option>
+                    <option value="0">Disabled (Always Fresh)</option>
+                  </select>
+                </div>
+                <div class="field-item">
+                  <label for="setting-max-bulk">Maximum Bulk Scan Batch Size:</label>
+                  <input type="number" id="setting-max-bulk" value="100" min="10" max="500" class="form-input">
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 2: SSRF & Security Guards -->
+            <div class="glass-card">
+              <div class="panel-header-row">
+                <h2>SSRF & Security Boundary Policies</h2>
+              </div>
+              <div class="settings-toggle-list">
+                <label class="toggle-control">
+                  <input type="checkbox" id="toggle-ssrf-rfc1918" checked>
+                  <span class="toggle-slider"></span>
+                  <div class="toggle-text">
+                    <strong>Block Private RFC1918 Networks</strong>
+                    <span class="text-muted">Rejects scanning 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16</span>
+                  </div>
+                </label>
+
+                <label class="toggle-control">
+                  <input type="checkbox" id="toggle-ssrf-loopback" checked>
+                  <span class="toggle-slider"></span>
+                  <div class="toggle-text">
+                    <strong>Block Loopback & Localhost (127.0.0.1, ::1)</strong>
+                    <span class="text-muted">Protects local host services from probe extraction</span>
+                  </div>
+                </label>
+
+                <label class="toggle-control">
+                  <input type="checkbox" id="toggle-ssrf-metadata" checked>
+                  <span class="toggle-slider"></span>
+                  <div class="toggle-text">
+                    <strong>Block Cloud Metadata Endpoints (169.254.169.254)</strong>
+                    <span class="text-muted">Guards AWS, GCP, and Azure instance metadata services</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Section 3: Scoring & Consensus -->
+            <div class="glass-card">
+              <div class="panel-header-row">
+                <h2>Weighted Scoring Engine</h2>
+              </div>
+              <div class="settings-field-group">
+                <div class="field-item">
+                  <label for="setting-consensus-thresh">Multi-Vendor Malicious Consensus Boost Threshold:</label>
+                  <select id="setting-consensus-thresh" class="form-select">
+                    <option value="2" selected>2+ Malicious Engines (Score ≥ 85)</option>
+                    <option value="3">3+ Malicious Engines (Score ≥ 90)</option>
+                    <option value="1">1 Malicious Engine (Aggressive)</option>
+                  </select>
+                </div>
+                <div class="field-item">
+                  <label for="setting-defang-pref">Default Indicator Defanging Format:</label>
+                  <select id="setting-defang-pref" class="form-select">
+                    <option value="brackets" selected>Bracketed: hxxp[://]example[.]com</option>
+                    <option value="parentheses">Parentheses: hxxp(://)example(.)com</option>
+                    <option value="asterisk">Asterisks: h**p://example*com</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 4: Database Maintenance -->
+            <div class="glass-card">
+              <div class="panel-header-row">
+                <h2>Database Storage & Maintenance</h2>
+              </div>
+              <div class="db-maintenance-row">
+                <div>
+                  <strong>Persistent SQLite Storage</strong>
+                  <span class="text-muted" style="display:block;font-size:0.8rem;" id="db-storage-status">Tracking scan records & API configurations</span>
+                </div>
+                <div style="display:flex;gap:0.75rem;">
+                  <button type="button" class="btn-secondary btn-sm" id="btn-vacuum-db">
+                    <i data-lucide="database"></i> Optimize & Vacuum
+                  </button>
+                  <button type="button" class="btn-danger btn-sm" id="btn-settings-clear-db">
+                    <i data-lucide="trash-2"></i> Reset Database
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Save Settings Button -->
+            <div style="display:flex;justify-content:flex-end;">
+              <button type="button" class="btn-scan-main" id="btn-save-all-settings">Save Application Preferences</button>
+            </div>
+
           </div>
         </section>
 
       </main>
     </div>
 
+  </div>
+
+  <!-- ================= SOURCE INSPECTION DETAIL MODAL ================= -->
+  <div id="source-detail-modal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="header-title">
+          <i data-lucide="shield" id="modal-source-icon"></i>
+          <h2 id="modal-source-title">Intelligence Engine Details</h2>
+        </div>
+        <button class="btn-close-modal" id="btn-close-source-modal">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-source-body">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <span class="badge-source-verdict" id="modal-source-badge">VERDICT</span>
+          <span style="font-size:0.8rem;color:var(--text-muted);" id="modal-source-latency">Latency: 45ms</span>
+        </div>
+        <div class="recommendations-box" style="margin-bottom:1rem;">
+          <span class="section-label">Engine Analysis Summary</span>
+          <p id="modal-source-summary" style="font-size:0.9rem;color:#f8fafc;"></p>
+        </div>
+        <div style="margin-bottom:1rem;">
+          <span class="section-label">Raw Finding Details</span>
+          <pre class="json-code-block" id="modal-source-raw"><code>{}</code></pre>
+        </div>
+        <div style="text-align:right;">
+          <a href="#" target="_blank" class="btn-link-action" id="modal-source-link">View Provider Feed →</a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Raw JSON Modal -->
