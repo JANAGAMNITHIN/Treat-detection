@@ -10,8 +10,8 @@ async def test_frontend_serving():
         # Root index.html
         response = await client.get("/")
         assert response.status_code == 200
-        assert "ThreatScope" in response.text
-        assert "Unified Multi-IOC" in response.text
+        assert "THREATSCOPE" in response.text.upper()
+        assert "Unified Threat Detection" in response.text
 
 @pytest.mark.asyncio
 async def test_defanged_url_scan():

@@ -3,556 +3,926 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ThreatScope — Unified Multi-IOC Threat Intelligence Platform</title>
-  <meta name="description" content="Unified threat detection and multi-IOC scanner. Analyze URLs, IPs, domains, hashes, files, and email headers across VirusTotal, AbuseIPDB, URLScan, Safe Browsing, MalwareBazaar, and WHOIS.">
+  <title>ThreatScope — Unified Threat Detection Platform</title>
+  <meta name="description" content="Unified threat detection and multi-IOC scanner. Analyze URLs, IPs, domains, hashes, files, and emails across multiple intelligence feeds.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/styles.css">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="dark-theme">
-  <div class="app-layout">
+<body>
+  <div class="dashboard-wrapper">
     
-    <!-- Top Navigation Bar -->
-    <header class="top-nav">
-      <div class="nav-brand">
-        <div class="brand-logo">
-          <i data-lucide="shield-alert" class="brand-icon"></i>
-        </div>
-        <div class="brand-text">
-          <span class="brand-title">ThreatScope</span>
-          <span class="brand-tag">Multi-IOC Threat Scanner</span>
-        </div>
-      </div>
-
-      <div class="nav-status">
-        <div class="feed-status-badge" id="feed-status-badge">
-          <span class="status-dot online"></span>
-          <span id="feed-status-text">Feeds Active (Local + Mock/Live)</span>
+    <!-- ================= LEFT SIDEBAR ================= -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo-box">
+          <div class="logo-shield">
+            <i data-lucide="shield-alert" class="shield-svg"></i>
+          </div>
+          <div class="brand-titles">
+            <h1 class="brand-name">THREATSCOPE</h1>
+            <span class="brand-sub">Unified Threat Detection</span>
+          </div>
         </div>
       </div>
 
-      <div class="nav-actions">
-        <button id="theme-toggle-btn" class="nav-btn" title="Toggle Theme" aria-label="Toggle theme">
-          <i data-lucide="sun" id="theme-icon"></i>
+      <nav class="sidebar-menu" aria-label="Main Menu">
+        <button class="nav-item active" data-nav="dashboard">
+          <i data-lucide="home"></i>
+          <span>Dashboard</span>
         </button>
-        <button id="settings-btn" class="nav-btn btn-settings" title="API Keys & Settings" aria-label="API Keys and Settings">
-          <i data-lucide="key"></i>
-          <span>API Keys</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- Main Navigation Tabs -->
-    <nav class="main-tabs-nav" aria-label="Navigation Tabs">
-      <div class="tabs-container">
-        <button class="tab-btn active" data-tab="unified-scanner" id="tab-btn-scanner">
+        <button class="nav-item" data-nav="scan">
           <i data-lucide="search"></i>
-          <span>Unified Scanner</span>
+          <span>Scan</span>
         </button>
-        <button class="tab-btn" data-tab="file-scanner" id="tab-btn-file">
-          <i data-lucide="file-code"></i>
-          <span>File Hash & Upload</span>
-        </button>
-        <button class="tab-btn" data-tab="bulk-scanner" id="tab-btn-bulk">
+        <button class="nav-item" data-nav="bulk-scan">
           <i data-lucide="layers"></i>
-          <span>Bulk Multi-IOC</span>
+          <span>Bulk Scan</span>
         </button>
-        <button class="tab-btn" data-tab="email-scanner" id="tab-btn-email">
-          <i data-lucide="mail"></i>
-          <span>Email & Headers</span>
+        <button class="nav-item" data-nav="history">
+          <i data-lucide="clock"></i>
+          <span>History</span>
         </button>
-        <button class="tab-btn" data-tab="history-view" id="tab-btn-history">
-          <i data-lucide="history"></i>
-          <span>Scan Audit Log</span>
+        <button class="nav-item" data-nav="reports">
+          <i data-lucide="file-text"></i>
+          <span>Reports</span>
         </button>
+        <button class="nav-item" data-nav="intel">
+          <i data-lucide="shield-check"></i>
+          <span>Threat Intelligence</span>
+        </button>
+        <button class="nav-item" data-nav="whitelist">
+          <i data-lucide="check-circle-2"></i>
+          <span>Whitelist</span>
+        </button>
+        <button class="nav-item" data-nav="api-keys">
+          <i data-lucide="network"></i>
+          <span>API Integrations</span>
+        </button>
+        <button class="nav-item" data-nav="settings">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="company-badge-card">
+          <div class="company-icon-box">
+            <i data-lucide="shield" class="company-logo-svg"></i>
+          </div>
+          <div class="company-text">
+            <span class="company-name">MNCS</span>
+            <span class="company-sub">MNC Cyber Security Pvt. Ltd.</span>
+            <span class="enterprise-tag">Enterprise</span>
+          </div>
+        </div>
+        
+        <div class="system-status-indicator">
+          <span class="status-dot-pulse"></span>
+          <div class="status-texts">
+            <span class="status-title">System Status</span>
+            <span class="status-val">All Systems Operational</span>
+          </div>
+        </div>
+
+        <div class="copyright-label">
+          © 2026 ThreatScope v1.0.0
+        </div>
       </div>
-    </nav>
+    </aside>
 
-    <!-- Main Content Area -->
-    <main class="main-content">
-
-      <!-- ================= TAB 1: UNIFIED SCANNER ================= -->
-      <section id="unified-scanner" class="tab-pane active">
-        <div class="scanner-hero">
-          <h1 class="hero-title">Unified Indicator Analysis</h1>
-          <p class="hero-subtitle">Input any IOC: IPv4, IPv6, URL, Domain, MD5, SHA-1, SHA-256, or Email. Defanged indicators are automatically refanged for scanning and defanged for safe display.</p>
-          
-          <form id="single-scan-form" class="scan-input-card">
-            <div class="input-wrapper">
-              <i data-lucide="search" class="input-search-icon"></i>
-              <input 
-                type="text" 
-                id="ioc-input" 
-                placeholder="Paste IOC: e.g. hxxps[://]evil[.]com/drop, 8.8.8.8, 44d88612fea8a8f36de82e1278abb02f, bad[.]site..." 
-                autocomplete="off" 
-                spellcheck="false"
-                required
-              />
-              <div id="ioc-badge" class="ioc-detect-badge hidden">
-                <span id="ioc-badge-text">AUTO</span>
-              </div>
-              <button type="submit" id="scan-submit-btn" class="btn-primary">
-                <span class="btn-text">Analyze IOC</span>
-                <i data-lucide="arrow-right" class="btn-icon"></i>
-              </button>
-            </div>
-
-            <!-- Quick Example Pills -->
-            <div class="quick-examples">
-              <span class="examples-label">Try sample:</span>
-              <button type="button" class="example-pill" data-ioc="hxxps[://]malware-drop[.]xyz/invoice.exe">Malicious URL (Defanged)</button>
-              <button type="button" class="example-pill" data-ioc="275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f">WannaCry SHA-256</button>
-              <button type="button" class="example-pill" data-ioc="185.220.101.5">High Risk Tor IP</button>
-              <button type="button" class="example-pill" data-ioc="8.8.8.8">Clean Google DNS</button>
-              <button type="button" class="example-pill" data-ioc="newly-registered-phish[.]site">New Phishing Domain</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Single Scan Results Section -->
-        <div id="scan-results-container" class="results-container hidden">
-          <!-- Loading State -->
-          <div id="scan-loading" class="scan-loading-card hidden">
-            <div class="spinner"></div>
-            <h3>Dispatching multi-source threat intelligence queries...</h3>
-            <p>Querying VirusTotal, AbuseIPDB, URLScan.io, Safe Browsing, MalwareBazaar, and RDAP...</p>
-          </div>
-
-          <!-- Active Scan Report Viewport -->
-          <div id="scan-report" class="scan-report hidden">
-            
-            <!-- Verdict Header Banner -->
-            <div class="verdict-banner" id="verdict-banner">
-              <div class="verdict-main">
-                <div class="verdict-indicator-box">
-                  <div class="verdict-badge" id="verdict-badge">MALICIOUS</div>
-                  <div class="risk-level-badge" id="risk-level-badge">CRITICAL RISK</div>
-                  <span class="cached-pill hidden" id="cached-pill"><i data-lucide="database"></i> Cached (24h)</span>
-                </div>
-                <div class="ioc-display-info">
-                  <div class="ioc-safe-display">
-                    <span class="label">Indicator (Defanged):</span>
-                    <code id="report-ioc-defanged">hxxp[://]evil[.]com</code>
-                    <button class="btn-copy" id="btn-copy-defanged" title="Copy Safe Defanged IOC"><i data-lucide="copy"></i></button>
-                  </div>
-                  <div class="ioc-meta-row">
-                    <span class="meta-tag" id="report-ioc-type">Type: URL</span>
-                    <span class="meta-tag" id="report-timestamp">Scanned: Just now</span>
-                    <span class="meta-tag" id="report-sources-count">Sources: 6 checked</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Threat Gauge Meter -->
-              <div class="threat-gauge-card">
-                <div class="gauge-ring-wrapper">
-                  <svg class="gauge-svg" viewBox="0 0 100 100">
-                    <circle class="gauge-bg" cx="50" cy="50" r="42"></circle>
-                    <circle class="gauge-fill" id="gauge-fill-circle" cx="50" cy="50" r="42"></circle>
-                  </svg>
-                  <div class="gauge-value-text">
-                    <span class="gauge-number" id="gauge-score-val">88</span>
-                    <span class="gauge-scale">/ 100</span>
-                  </div>
-                </div>
-                <span class="gauge-label">Threat Confidence Score</span>
-              </div>
-            </div>
-
-            <!-- Scoring Breakdown & Rationale -->
-            <div class="section-card scoring-breakdown-card">
-              <div class="card-header">
-                <div class="header-title">
-                  <i data-lucide="calculator"></i>
-                  <h3>Weighted Scoring Breakdown & Detection Factors</h3>
-                </div>
-              </div>
-              <div class="card-body">
-                <div id="scoring-factors-list" class="factors-list">
-                  <!-- Injected dynamically -->
-                </div>
-              </div>
-            </div>
-
-            <!-- Email Cascade Sub-Scans (If applicable) -->
-            <div id="email-subscans-card" class="section-card email-cascade-card hidden">
-              <div class="card-header">
-                <div class="header-title">
-                  <i data-lucide="git-fork"></i>
-                  <h3>Cascaded Email Sub-Scans (Embedded URLs & Attachments)</h3>
-                </div>
-              </div>
-              <div class="card-body">
-                <div id="email-subscans-container" class="subscans-grid">
-                  <!-- Injected dynamically -->
-                </div>
-              </div>
-            </div>
-
-            <!-- Threat Intel Provider Grid -->
-            <div class="section-card">
-              <div class="card-header">
-                <div class="header-title">
-                  <i data-lucide="layers"></i>
-                  <h3>Threat Intelligence Source Analysis</h3>
-                </div>
-                <button id="btn-toggle-raw-json" class="btn-secondary btn-sm">
-                  <i data-lucide="code"></i>
-                  <span>Inspect Raw JSON</span>
-                </button>
-              </div>
-              <div class="card-body">
-                <div id="provider-cards-grid" class="providers-grid">
-                  <!-- Injected dynamically -->
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= TAB 2: FILE SCANNER ================= -->
-      <section id="file-scanner" class="tab-pane">
-        <div class="scanner-hero">
-          <h1 class="hero-title">File Hash & Binary Inspection</h1>
-          <p class="hero-subtitle">Upload any file or suspicious artifact. ThreatScope computes MD5, SHA-1, and SHA-256 hashes client-side in real-time, then queries VirusTotal and MalwareBazaar datasets.</p>
-
-          <div class="file-upload-card" id="file-drop-zone">
-            <i data-lucide="upload-cloud" class="upload-icon"></i>
-            <h3>Drag & Drop suspicious file here</h3>
-            <p>or click to browse from your device (hashes calculated instantly)</p>
-            <input type="file" id="file-upload-input" class="hidden-file-input">
-            <button type="button" class="btn-primary btn-upload" id="btn-browse-file">Select File</button>
-          </div>
-
-          <!-- File Hash Computation Result Card -->
-          <div id="file-hashes-preview" class="file-preview-card hidden">
-            <div class="file-info-header">
-              <i data-lucide="file-check"></i>
-              <div>
-                <strong id="preview-filename">malware_sample.exe</strong>
-                <span id="preview-filesize" class="text-muted">(1.2 MB)</span>
-              </div>
-            </div>
-            <div class="hashes-table">
-              <div class="hash-row">
-                <span class="hash-type">SHA-256:</span>
-                <code id="preview-sha256">Computing...</code>
-              </div>
-              <div class="hash-row">
-                <span class="hash-type">SHA-1:</span>
-                <code id="preview-sha1">Computing...</code>
-              </div>
-              <div class="hash-row">
-                <span class="hash-type">MD5:</span>
-                <code id="preview-md5">Computing...</code>
-              </div>
-            </div>
-            <button id="btn-scan-uploaded-file" class="btn-primary">
-              <i data-lucide="shield-alert"></i>
-              <span>Scan File Hash Now</span>
+    <!-- ================= MAIN APP VIEWPORT ================= -->
+    <div class="main-viewport">
+      
+      <!-- Top Navigation Header -->
+      <header class="top-header">
+        <div class="top-search-form">
+          <div class="search-input-box">
+            <input 
+              type="text" 
+              id="top-ioc-search" 
+              placeholder="Scan any IOC (URL, IP, Domain, Hash, Email...)" 
+              autocomplete="off" 
+              spellcheck="false"
+            />
+            <button type="button" id="top-search-btn" class="btn-top-scan">
+              <i data-lucide="scan"></i>
+              <span>Scan</span>
             </button>
           </div>
         </div>
-      </section>
 
-      <!-- ================= TAB 3: BULK MULTI-IOC ================= -->
-      <section id="bulk-scanner" class="tab-pane">
-        <div class="scanner-hero">
-          <h1 class="hero-title">Bulk Multi-IOC Scanner</h1>
-          <p class="hero-subtitle">Scan up to 100 mixed IOCs simultaneously. Paste a list of URLs, IPs, domains, hashes, or upload a CSV file.</p>
+        <div class="top-header-actions">
+          <button class="icon-action-btn notification-btn" title="Alerts & Notifications" id="btn-notifications">
+            <i data-lucide="bell"></i>
+            <span class="badge-count">3</span>
+          </button>
+          <button class="icon-action-btn" title="Documentation & Help" id="btn-help">
+            <i data-lucide="help-circle"></i>
+          </button>
+          <div class="user-avatar" title="Analyst User: MN">
+            <span>MN</span>
+          </div>
+        </div>
+      </header>
 
-          <div class="bulk-input-card">
-            <div class="bulk-actions-toolbar">
-              <label for="bulk-text-input" class="bulk-label">Enter Newline or CSV-separated IOCs:</label>
-              <div class="bulk-file-upload">
-                <input type="file" id="bulk-csv-file" accept=".csv,.txt" class="hidden-file-input">
-                <button type="button" class="btn-secondary btn-sm" id="btn-upload-csv">
-                  <i data-lucide="file-text"></i>
-                  <span>Import CSV / TXT</span>
+      <!-- Scrollable Main Container -->
+      <main class="dashboard-body">
+
+        <!-- ================= VIEW 1: DASHBOARD (MAIN VIEW) ================= -->
+        <section id="view-dashboard" class="app-view active">
+          
+          <!-- 1. KPI Stats Metric Cards Row (5 Cards) -->
+          <div class="kpi-grid">
+            
+            <!-- KPI 1: Total Scans -->
+            <div class="kpi-card">
+              <div class="kpi-meta">
+                <span class="kpi-title">Total Scans</span>
+                <h3 class="kpi-value" id="kpi-total-scans">42,587</h3>
+                <span class="kpi-trend trend-cyan">
+                  <i data-lucide="trending-up"></i> 12.4% from last 7 days
+                </span>
+              </div>
+              <div class="kpi-sparkline">
+                <svg viewBox="0 0 100 40" class="sparkline-svg sparkline-cyan">
+                  <path d="M0,35 Q15,30 30,22 T60,18 T85,10 T100,5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- KPI 2: Malicious Detections -->
+            <div class="kpi-card">
+              <div class="kpi-meta">
+                <span class="kpi-title">Malicious Detections</span>
+                <h3 class="kpi-value value-red" id="kpi-malicious-scans">3,481</h3>
+                <span class="kpi-trend trend-red">
+                  <i data-lucide="trending-up"></i> 8.7% from last 7 days
+                </span>
+              </div>
+              <div class="kpi-sparkline">
+                <svg viewBox="0 0 100 40" class="sparkline-svg sparkline-red">
+                  <path d="M0,30 Q20,38 40,25 T70,15 T100,8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- KPI 3: Suspicious Detections -->
+            <div class="kpi-card">
+              <div class="kpi-meta">
+                <span class="kpi-title">Suspicious Detections</span>
+                <h3 class="kpi-value value-orange" id="kpi-suspicious-scans">6,214</h3>
+                <span class="kpi-trend trend-orange">
+                  <i data-lucide="trending-up"></i> 5.3% from last 7 days
+                </span>
+              </div>
+              <div class="kpi-sparkline">
+                <svg viewBox="0 0 100 40" class="sparkline-svg sparkline-orange">
+                  <path d="M0,28 Q25,35 50,20 T75,22 T100,10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- KPI 4: Clean Detections -->
+            <div class="kpi-card">
+              <div class="kpi-meta">
+                <span class="kpi-title">Clean Detections</span>
+                <h3 class="kpi-value value-green" id="kpi-clean-scans">32,892</h3>
+                <span class="kpi-trend trend-green">
+                  <i data-lucide="trending-up"></i> 14.6% from last 7 days
+                </span>
+              </div>
+              <div class="kpi-sparkline">
+                <svg viewBox="0 0 100 40" class="sparkline-svg sparkline-green">
+                  <path d="M0,35 Q30,28 60,15 T90,8 T100,4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- KPI 5: Avg. Confidence Score -->
+            <div class="kpi-card">
+              <div class="kpi-meta">
+                <span class="kpi-title">Avg. Confidence Score</span>
+                <h3 class="kpi-value" id="kpi-avg-score">76 <span class="kpi-sub">/100</span></h3>
+                <span class="kpi-trend trend-purple">
+                  <i data-lucide="trending-up"></i> 3.1% from last 7 days
+                </span>
+              </div>
+              <div class="kpi-sparkline">
+                <svg viewBox="0 0 100 40" class="sparkline-svg sparkline-purple">
+                  <path d="M0,25 Q20,10 45,30 T75,12 T100,8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 2. Dual Search & File Upload Cards Row -->
+          <div class="action-cards-grid">
+            
+            <!-- Left: Primary IOC Scanner Card -->
+            <div class="glass-card main-ioc-card">
+              <div class="card-inner-header">
+                <h2>Scan Any Indicator of Compromise (IOC)</h2>
+                <p>Enter any IOC below. Supports URLs, IPs, Domains, Hashes, Emails, or upload files.</p>
+              </div>
+
+              <form id="dashboard-scan-form" class="ioc-form-container">
+                <div class="ioc-input-bar">
+                  <input 
+                    type="text" 
+                    id="dashboard-ioc-input" 
+                    placeholder="e.g. https://malicious-site.com, 192.168.1.1, sample@phish.com, 44d88612fea8a8f36..." 
+                    autocomplete="off" 
+                    spellcheck="false"
+                  />
+                  <div class="input-actions-group">
+                    <button type="button" class="btn-input-icon" id="btn-input-paste" title="Paste from Clipboard">
+                      <i data-lucide="paperclip"></i>
+                    </button>
+                    <button type="button" class="btn-input-icon" id="btn-input-upload" title="Upload File">
+                      <i data-lucide="upload"></i>
+                    </button>
+                    <button type="submit" class="btn-scan-main" id="btn-dashboard-scan">
+                      <span>Scan Now</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Supported Tags Pill List -->
+                <div class="supported-pills-row">
+                  <span class="supported-label">Supported:</span>
+                  <button type="button" class="type-pill" data-sample="https://malicious-site.com/login.php">URL</button>
+                  <button type="button" class="type-pill" data-sample="bad-actor-phish.xyz">Domain</button>
+                  <button type="button" class="type-pill" data-sample="185.220.101.5">IPv4</button>
+                  <button type="button" class="type-pill" data-sample="2001:db8::1">IPv6</button>
+                  <button type="button" class="type-pill" data-sample="275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f">Hash (MD5, SHA1, SHA256)</button>
+                  <button type="button" class="type-pill" data-sample="alert@target-bank.com">Email</button>
+                  <button type="button" class="type-pill" id="pill-file-trigger">File Upload</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Right: Scan a File Drag & Drop Card -->
+            <div class="glass-card file-drop-card" id="dashboard-file-dropzone">
+              <div class="card-inner-header">
+                <h2>Scan a File</h2>
+              </div>
+              <div class="file-drop-interior">
+                <input type="file" id="dashboard-file-input" class="hidden-file-input">
+                <div class="drop-icon-box">
+                  <i data-lucide="file-code" class="file-svg-icon"></i>
+                </div>
+                <div class="drop-text-content">
+                  <p class="drop-prompt">Drag & drop a file here or click to browse</p>
+                  <span class="drop-sub">Max file size: 100MB</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 3. Intelligence Triptych: Latest Scan | Source Breakdown | Risk Score Breakdown -->
+          <div class="triptych-grid" id="dashboard-triptych">
+            
+            <!-- Column 1: Latest Scan Result -->
+            <div class="glass-card result-panel-card">
+              <div class="panel-header-row">
+                <h2>Latest Scan Result</h2>
+              </div>
+
+              <div class="latest-result-body" id="latest-result-body">
+                <!-- Top Indicator Title & Score -->
+                <div class="latest-result-top">
+                  <div class="verdict-tag-pill tag-malicious" id="latest-verdict-tag">MALICIOUS</div>
+                  <div class="latest-ioc-title-box">
+                    <div class="ioc-heading-row">
+                      <strong class="latest-ioc-string" id="latest-ioc-text">https://malicious-site.com/login.php</strong>
+                      <button class="btn-inline-copy" id="btn-copy-latest-ioc" title="Copy Indicator"><i data-lucide="copy"></i></button>
+                    </div>
+                    <span class="latest-ioc-sub" id="latest-ioc-meta">URL • Scanned just now</span>
+                  </div>
+                  <div class="latest-score-dial">
+                    <div class="score-dial-text">
+                      <span class="dial-label">Confidence Score</span>
+                      <div class="dial-numbers">
+                        <span class="dial-main-num score-red" id="latest-score-number">92</span>
+                        <span class="dial-max">/100</span>
+                      </div>
+                    </div>
+                    <div class="score-ring-mini">
+                      <svg viewBox="0 0 36 36" class="circular-chart red">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path class="circle" id="latest-ring-circle" stroke-dasharray="92, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Executive Summary -->
+                <div class="latest-summary-section">
+                  <span class="section-label">Summary</span>
+                  <p id="latest-summary-text">This URL is detected as malicious by multiple security vendors. It is associated with phishing activities and credential theft.</p>
+                </div>
+
+                <!-- 4 Quick Stats Badges Grid -->
+                <div class="stats-badge-grid">
+                  <div class="stat-badge-item">
+                    <i data-lucide="calendar"></i>
+                    <div>
+                      <span class="stat-lbl">Scan Date</span>
+                      <strong class="stat-val" id="latest-stat-date">May 21, 2025 10:24 AM</strong>
+                    </div>
+                  </div>
+                  <div class="stat-badge-item">
+                    <i data-lucide="shield"></i>
+                    <div>
+                      <span class="stat-lbl">Sources</span>
+                      <strong class="stat-val text-green" id="latest-stat-sources">12 / 18</strong>
+                    </div>
+                  </div>
+                  <div class="stat-badge-item">
+                    <i data-lucide="radar"></i>
+                    <div>
+                      <span class="stat-lbl">Detections</span>
+                      <strong class="stat-val text-red" id="latest-stat-detections">11</strong>
+                    </div>
+                  </div>
+                  <div class="stat-badge-item">
+                    <i data-lucide="alert-triangle"></i>
+                    <div>
+                      <span class="stat-lbl">Verdict</span>
+                      <strong class="stat-val text-red" id="latest-stat-verdict">Malicious</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Dual Columns: Risk Factors & Tags -->
+                <div class="factors-tags-row">
+                  <div class="factors-col">
+                    <span class="section-label">Risk Factors</span>
+                    <ul class="bullet-list" id="latest-factors-list">
+                      <li>• Detected as phishing site</li>
+                      <li>• Contains malicious redirects</li>
+                      <li>• Domain age is very recent (2 days)</li>
+                      <li>• Low reputation score</li>
+                    </ul>
+                  </div>
+                  <div class="tags-col">
+                    <span class="section-label">Tags</span>
+                    <div class="tags-cloud" id="latest-tags-list">
+                      <span class="pill-tag">phishing</span>
+                      <span class="pill-tag">credential-theft</span>
+                      <span class="pill-tag">malware-distribution</span>
+                      <span class="pill-tag pill-tag-more">+2</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bottom Action Link -->
+                <div class="card-footer-link">
+                  <button type="button" class="btn-link-action" id="btn-view-full-report">
+                    <span>View Full Report</span>
+                    <i data-lucide="arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Column 2: Source Breakdown List -->
+            <div class="glass-card sources-panel-card">
+              <div class="panel-header-row">
+                <h2>Source Breakdown</h2>
+              </div>
+
+              <div class="sources-list" id="dashboard-sources-list">
+                <!-- Source Row 1: VirusTotal -->
+                <div class="source-row">
+                  <div class="source-info">
+                    <div class="source-icon-box vt-icon">
+                      <i data-lucide="shield"></i>
+                    </div>
+                    <span class="source-name">VirusTotal</span>
+                  </div>
+                  <div class="source-verdict-right">
+                    <span class="badge-source-verdict tag-malicious">Malicious</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+
+                <!-- Source Row 2: Google Safe Browsing -->
+                <div class="source-row">
+                  <div class="source-info">
+                    <div class="source-icon-box gsb-icon">
+                      <i data-lucide="globe"></i>
+                    </div>
+                    <span class="source-name">Google Safe Browsing</span>
+                  </div>
+                  <div class="source-verdict-right">
+                    <span class="badge-source-verdict tag-malicious">Malicious</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+
+                <!-- Source Row 3: URLScan.io -->
+                <div class="source-row">
+                  <div class="source-info">
+                    <div class="source-icon-box urlscan-icon">
+                      <i data-lucide="external-link"></i>
+                    </div>
+                    <span class="source-name">URLScan.io</span>
+                  </div>
+                  <div class="source-verdict-right">
+                    <span class="badge-source-verdict tag-malicious">Malicious</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+
+                <!-- Source Row 4: PhishTank / MalwareBazaar -->
+                <div class="source-row">
+                  <div class="source-info">
+                    <div class="source-icon-box phish-icon">
+                      <i data-lucide="anchor"></i>
+                    </div>
+                    <span class="source-name">MalwareBazaar / PhishTank</span>
+                  </div>
+                  <div class="source-verdict-right">
+                    <span class="badge-source-verdict tag-malicious">Malicious</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+
+                <!-- Source Row 5: AbuseIPDB -->
+                <div class="source-row">
+                  <div class="source-info">
+                    <div class="source-icon-box abuse-icon">
+                      <i data-lucide="database"></i>
+                    </div>
+                    <span class="source-name">AbuseIPDB</span>
+                  </div>
+                  <div class="source-verdict-right">
+                    <span class="badge-source-verdict tag-clean">Clean</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+
+                <!-- Source Row 6: GreyNoise -->
+                <div class="source-row">
+                  <div class="source-info">
+                    <div class="source-icon-box gn-icon">
+                      <i data-lucide="radio"></i>
+                    </div>
+                    <span class="source-name">GreyNoise</span>
+                  </div>
+                  <div class="source-verdict-right">
+                    <span class="badge-source-verdict tag-clean">Clean</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+
+                <!-- Source Row 7: Shodan -->
+                <div class="source-row">
+                  <div class="source-info">
+                    <div class="source-icon-box shodan-icon">
+                      <i data-lucide="eye"></i>
+                    </div>
+                    <span class="source-name">Shodan</span>
+                  </div>
+                  <div class="source-verdict-right">
+                    <span class="badge-source-verdict tag-suspicious">Suspicious</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+
+                <!-- Source Row 8: Domain Age (WHOIS/RDAP) -->
+                <div class="source-row">
+                  <div class="source-info">
+                    <div class="source-icon-box whois-icon">
+                      <i data-lucide="info"></i>
+                    </div>
+                    <span class="source-name">Domain Age (WHOIS)</span>
+                  </div>
+                  <div class="source-verdict-right">
+                    <span class="badge-source-verdict tag-suspicious">Suspicious</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bottom Action Link -->
+              <div class="card-footer-link">
+                <button type="button" class="btn-link-action" id="btn-view-all-sources">
+                  <span>View All Sources</span>
+                  <i data-lucide="arrow-right"></i>
                 </button>
               </div>
             </div>
 
-            <textarea 
-              id="bulk-text-input" 
-              rows="6" 
-              placeholder="8.8.8.8&#10;192[.]168[.]1[.]1&#10;hxxps[://]evil-domain[.]com/bad.exe&#10;275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f&#10;phishing-site.xyz"
-            ></textarea>
-
-            <div class="bulk-footer">
-              <div class="bulk-stats-indicator">
-                <span id="bulk-detected-count">0 IOCs detected</span>
+            <!-- Column 3: Risk Score Breakdown & Donut Gauge -->
+            <div class="glass-card score-panel-card">
+              <div class="panel-header-row">
+                <h2>Risk Score Breakdown</h2>
               </div>
-              <button id="btn-start-bulk-scan" class="btn-primary">
+
+              <div class="score-panel-body">
+                <!-- Large Donut Gauge -->
+                <div class="donut-chart-wrapper">
+                  <div class="donut-svg-container">
+                    <svg viewBox="0 0 160 160" class="donut-svg">
+                      <circle cx="80" cy="80" r="62" class="donut-bg-ring"></circle>
+                      <!-- Multi-colored Donut Segments -->
+                      <circle cx="80" cy="80" r="62" class="donut-seg-red" stroke-dasharray="160 230" stroke-dashoffset="0"></circle>
+                      <circle cx="80" cy="80" r="62" class="donut-seg-orange" stroke-dasharray="90 300" stroke-dashoffset="-165"></circle>
+                      <circle cx="80" cy="80" r="62" class="donut-seg-yellow" stroke-dasharray="55 335" stroke-dashoffset="-260"></circle>
+                      <circle cx="80" cy="80" r="62" class="donut-seg-green" stroke-dasharray="35 355" stroke-dashoffset="-320"></circle>
+                    </svg>
+                    <div class="donut-center-content">
+                      <span class="donut-big-num" id="donut-score-val">92</span>
+                      <span class="donut-sub-num">/100</span>
+                      <span class="donut-risk-pill" id="donut-risk-label">High Risk</span>
+                    </div>
+                  </div>
+
+                  <!-- Donut Legend Breakdown List -->
+                  <div class="donut-legend-list">
+                    <div class="legend-row">
+                      <span class="legend-dot dot-red"></span>
+                      <span class="legend-name">Vendor Detections</span>
+                      <strong class="legend-pct">45%</strong>
+                    </div>
+                    <div class="legend-row">
+                      <span class="legend-dot dot-orange"></span>
+                      <span class="legend-name">Content Analysis</span>
+                      <strong class="legend-pct">25%</strong>
+                    </div>
+                    <div class="legend-row">
+                      <span class="legend-dot dot-yellow"></span>
+                      <span class="legend-name">Reputation</span>
+                      <strong class="legend-pct">15%</strong>
+                    </div>
+                    <div class="legend-row">
+                      <span class="legend-dot dot-green"></span>
+                      <span class="legend-name">Domain Insights</span>
+                      <strong class="legend-pct">10%</strong>
+                    </div>
+                    <div class="legend-row">
+                      <span class="legend-dot dot-slate"></span>
+                      <span class="legend-name">Other Factors</span>
+                      <strong class="legend-pct">5%</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Analyst Recommendations Section -->
+                <div class="recommendations-box">
+                  <span class="section-label">Recommendations</span>
+                  <ul class="bullet-list-red">
+                    <li>• Do not visit this URL</li>
+                    <li>• Block this URL in your security tools</li>
+                    <li>• Check for indicators of compromise in your environment</li>
+                    <li>• Monitor for any related activity</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 4. Bottom Table: Recent Scans -->
+          <div class="glass-card recent-scans-card">
+            <div class="panel-header-row table-header-row">
+              <h2>Recent Scans</h2>
+            </div>
+
+            <div class="table-responsive">
+              <table class="soc-data-table" id="recent-scans-table">
+                <thead>
+                  <tr>
+                    <th>IOC / Target</th>
+                    <th>Type</th>
+                    <th>Verdict</th>
+                    <th>Score</th>
+                    <th>Sources</th>
+                    <th>Time</th>
+                    <th class="text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-scans-tbody">
+                  <!-- Injected dynamically / populated with active & recent logs -->
+                  <tr>
+                    <td><code>https://malicious-site.com/login.php</code></td>
+                    <td><span class="type-cell-tag">URL</span></td>
+                    <td><span class="badge-source-verdict tag-malicious">Malicious</span></td>
+                    <td><strong class="score-num-cell score-red">92</strong></td>
+                    <td><span class="sources-count-cell">12 / 18</span></td>
+                    <td><span class="time-cell">2 minutes ago</span></td>
+                    <td class="text-right actions-cell">
+                      <button class="btn-table-action" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
+                      <button class="btn-table-action" title="Export Report"><i data-lucide="file-text"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>192.168.1.100</code></td>
+                    <td><span class="type-cell-tag">IPv4</span></td>
+                    <td><span class="badge-source-verdict tag-suspicious">Suspicious</span></td>
+                    <td><strong class="score-num-cell score-orange">65</strong></td>
+                    <td><span class="sources-count-cell">8 / 15</span></td>
+                    <td><span class="time-cell">15 minutes ago</span></td>
+                    <td class="text-right actions-cell">
+                      <button class="btn-table-action" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
+                      <button class="btn-table-action" title="Export Report"><i data-lucide="file-text"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>44d88612fea8a8f36de82e1278abb02f</code></td>
+                    <td><span class="type-cell-tag">MD5</span></td>
+                    <td><span class="badge-source-verdict tag-clean">Clean</span></td>
+                    <td><strong class="score-num-cell score-green">10</strong></td>
+                    <td><span class="sources-count-cell">6 / 18</span></td>
+                    <td><span class="time-cell">1 hour ago</span></td>
+                    <td class="text-right actions-cell">
+                      <button class="btn-table-action" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
+                      <button class="btn-table-action" title="Export Report"><i data-lucide="file-text"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>invoice-update@secure-pay.com</code></td>
+                    <td><span class="type-cell-tag">Email</span></td>
+                    <td><span class="badge-source-verdict tag-malicious">Malicious</span></td>
+                    <td><strong class="score-num-cell score-red">88</strong></td>
+                    <td><span class="sources-count-cell">14 / 20</span></td>
+                    <td><span class="time-cell">2 hours ago</span></td>
+                    <td class="text-right actions-cell">
+                      <button class="btn-table-action" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
+                      <button class="btn-table-action" title="Export Report"><i data-lucide="file-text"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>example-domain.net</code></td>
+                    <td><span class="type-cell-tag">Domain</span></td>
+                    <td><span class="badge-source-verdict tag-suspicious">Suspicious</span></td>
+                    <td><strong class="score-num-cell score-orange">58</strong></td>
+                    <td><span class="sources-count-cell">9 / 16</span></td>
+                    <td><span class="time-cell">3 hours ago</span></td>
+                    <td class="text-right actions-cell">
+                      <button class="btn-table-action" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
+                      <button class="btn-table-action" title="Export Report"><i data-lucide="file-text"></i></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Table Footer -->
+            <div class="card-footer-link center-footer">
+              <button type="button" class="btn-link-action" id="btn-view-all-history">
+                <span>View All History</span>
+                <i data-lucide="arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ================= VIEW 2: FULL SCAN & DEEP REPORT ================= -->
+        <section id="view-scan" class="app-view">
+          <div class="view-header-title">
+            <h2>Detailed Threat Intelligence Report</h2>
+            <p>Full breakdown of external engine responses, behavioral indicators, and cryptographic validations.</p>
+          </div>
+
+          <div id="full-scan-report-container">
+            <!-- Dynamically populated report viewport -->
+          </div>
+        </section>
+
+        <!-- ================= VIEW 3: BULK MULTI-IOC ================= -->
+        <section id="view-bulk-scan" class="app-view">
+          <div class="view-header-title">
+            <h2>Bulk Multi-IOC Scanner</h2>
+            <p>Scan up to 100 mixed indicators simultaneously. Upload a CSV or paste a newline-separated list.</p>
+          </div>
+
+          <div class="glass-card bulk-view-card">
+            <div class="bulk-toolbar-row">
+              <span class="section-label">Enter Newline or CSV-separated IOCs:</span>
+              <div class="bulk-upload-wrapper">
+                <input type="file" id="bulk-view-csv-file" accept=".csv,.txt" class="hidden-file-input">
+                <button type="button" class="btn-secondary btn-sm" id="btn-bulk-import-csv">
+                  <i data-lucide="file-text"></i>
+                  <span>Import CSV File</span>
+                </button>
+              </div>
+            </div>
+
+            <textarea id="bulk-view-textarea" rows="8" placeholder="https://malicious-site.com&#10;185.220.101.5&#10;275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f&#10;sample@phish-domain.com"></textarea>
+
+            <div class="bulk-footer-actions">
+              <span id="bulk-view-count" class="text-muted">0 IOCs detected</span>
+              <button type="button" class="btn-scan-main" id="btn-bulk-view-execute">
                 <i data-lucide="play"></i>
                 <span>Execute Batch Scan</span>
               </button>
             </div>
           </div>
 
-          <!-- Bulk Progress and Results Container -->
-          <div id="bulk-results-container" class="bulk-results-card hidden">
-            <div class="bulk-summary-bar">
-              <div class="summary-metric metric-total">
-                <span class="metric-val" id="bulk-total-val">0</span>
-                <span class="metric-lbl">Total Scanned</span>
-              </div>
-              <div class="summary-metric metric-malicious">
-                <span class="metric-val" id="bulk-malicious-val">0</span>
-                <span class="metric-lbl">Malicious</span>
-              </div>
-              <div class="summary-metric metric-suspicious">
-                <span class="metric-val" id="bulk-suspicious-val">0</span>
-                <span class="metric-lbl">Suspicious</span>
-              </div>
-              <div class="summary-metric metric-clean">
-                <span class="metric-val" id="bulk-clean-val">0</span>
-                <span class="metric-lbl">Clean</span>
-              </div>
-              <div class="summary-actions">
-                <button id="btn-export-bulk-csv" class="btn-secondary">
-                  <i data-lucide="download"></i>
-                  <span>Export Batch Results (CSV)</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Batch Table -->
-            <div class="table-responsive">
-              <table class="data-table" id="bulk-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Defanged Indicator</th>
-                    <th>Type</th>
-                    <th>Verdict</th>
-                    <th>Risk Score</th>
-                    <th>Risk Level</th>
-                    <th>Cache Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody id="bulk-table-body">
-                  <!-- Rows injected dynamically -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================= TAB 4: EMAIL & HEADERS ================= -->
-      <section id="email-scanner" class="tab-pane">
-        <div class="scanner-hero">
-          <h1 class="hero-title">Raw Email & RFC 5322 Header Inspector</h1>
-          <p class="hero-subtitle">Analyze raw email headers, SPF/DKIM/DMARC authentication results, sender address spoofing risks, and extract embedded links & attachments with cascaded sub-scans.</p>
-
-          <form id="email-scan-form" class="email-input-card">
-            <div class="email-toolbar">
-              <label for="email-headers-input">Paste Raw Email Headers or .EML Content:</label>
-              <button type="button" id="btn-load-sample-email" class="btn-secondary btn-sm">
-                <i data-lucide="sparkles"></i>
-                <span>Load Phishing Sample</span>
+          <div id="bulk-view-results" class="glass-card bulk-results-card hidden">
+            <div class="bulk-kpis-row">
+              <div class="kpi-mini"><span>Total:</span> <strong id="bulk-kpi-total">0</strong></div>
+              <div class="kpi-mini text-red"><span>Malicious:</span> <strong id="bulk-kpi-mal">0</strong></div>
+              <div class="kpi-mini text-orange"><span>Suspicious:</span> <strong id="bulk-kpi-susp">0</strong></div>
+              <div class="kpi-mini text-green"><span>Clean:</span> <strong id="bulk-kpi-clean">0</strong></div>
+              <button type="button" class="btn-secondary btn-sm ml-auto" id="btn-bulk-view-export">
+                <i data-lucide="download"></i>
+                <span>Export CSV</span>
               </button>
             </div>
 
-            <textarea 
-              id="email-headers-input" 
-              rows="9" 
-              placeholder="Received: from mail.attacker.net...&#10;Authentication-Results: spf=fail dkim=fail...&#10;From: 'Security Team' <security@bank.com>&#10;Subject: Account Suspension..."
-              required
-            ></textarea>
+            <div class="table-responsive">
+              <table class="soc-data-table" id="bulk-view-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Indicator</th>
+                    <th>Type</th>
+                    <th>Verdict</th>
+                    <th>Score</th>
+                    <th>Risk Level</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="bulk-view-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
-            <button type="submit" class="btn-primary btn-scan-email">
-              <i data-lucide="mail-search"></i>
-              <span>Inspect Headers & Cascade Embedded IOCs</span>
-            </button>
-          </form>
-        </div>
-      </section>
+        <!-- ================= VIEW 4: HISTORY AUDIT LOG ================= -->
+        <section id="view-history" class="app-view">
+          <div class="view-header-title">
+            <h2>Scan History & Audit Logs</h2>
+            <p>Review and search past threat analyses stored in your local persistent database.</p>
+          </div>
 
-      <!-- ================= TAB 5: SCAN AUDIT LOG ================= -->
-      <section id="history-view" class="tab-pane">
-        <div class="history-card">
-          <div class="history-toolbar">
-            <div class="history-filters">
-              <div class="filter-group">
-                <label>Filter Type:</label>
-                <select id="history-type-filter" class="form-select">
-                  <option value="all">All Types</option>
+          <div class="glass-card history-card-view">
+            <div class="history-controls-row">
+              <div class="history-filters-box">
+                <select id="history-page-type" class="form-select">
+                  <option value="all">All IOC Types</option>
                   <option value="url">URLs</option>
                   <option value="domain">Domains</option>
                   <option value="ipv4">IPv4</option>
-                  <option value="ipv6">IPv6</option>
                   <option value="sha256">SHA-256</option>
-                  <option value="md5">MD5</option>
                   <option value="email">Email</option>
                 </select>
-              </div>
 
-              <div class="filter-group">
-                <label>Filter Verdict:</label>
-                <select id="history-verdict-filter" class="form-select">
+                <select id="history-page-verdict" class="form-select">
                   <option value="all">All Verdicts</option>
                   <option value="malicious">Malicious</option>
                   <option value="suspicious">Suspicious</option>
                   <option value="clean">Clean</option>
-                  <option value="unknown">Unknown</option>
                 </select>
+
+                <input type="text" id="history-page-search" placeholder="Search past IOCs..." class="form-input" />
               </div>
 
-              <div class="search-group">
-                <input type="text" id="history-search-input" placeholder="Search past indicators..." class="form-input">
+              <div class="history-buttons-box">
+                <a href="/api/history/export" class="btn-secondary btn-sm" download>
+                  <i data-lucide="download"></i>
+                  <span>Export CSV</span>
+                </a>
+                <button type="button" class="btn-danger btn-sm" id="btn-history-clear-all">
+                  <i data-lucide="trash-2"></i>
+                  <span>Clear All</span>
+                </button>
               </div>
             </div>
 
-            <div class="history-actions">
-              <a href="/api/history/export" class="btn-secondary btn-sm" id="btn-export-history-csv" download>
-                <i data-lucide="download"></i>
-                <span>Download History (CSV)</span>
-              </a>
-              <button type="button" class="btn-danger btn-sm" id="btn-clear-history">
-                <i data-lucide="trash-2"></i>
-                <span>Clear History</span>
-              </button>
+            <div class="table-responsive">
+              <table class="soc-data-table" id="history-full-table">
+                <thead>
+                  <tr>
+                    <th>Indicator</th>
+                    <th>Type</th>
+                    <th>Verdict</th>
+                    <th>Score</th>
+                    <th>Scanned Time</th>
+                    <th class="text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="history-full-tbody"></tbody>
+              </table>
             </div>
           </div>
+        </section>
 
-          <div class="table-responsive">
-            <table class="data-table" id="history-table">
-              <thead>
-                <tr>
-                  <th>Indicator (Defanged)</th>
-                  <th>Type</th>
-                  <th>Verdict</th>
-                  <th>Risk Score</th>
-                  <th>Risk Level</th>
-                  <th>Scanned Date (UTC)</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="history-table-body">
-                <!-- Rows injected dynamically -->
-              </tbody>
-            </table>
+        <!-- ================= VIEW 5: THREAT INTEL & API KEYS ================= -->
+        <section id="view-intel" class="app-view">
+          <div class="view-header-title">
+            <h2>Active Threat Intelligence Sources</h2>
+            <p>ThreatScope combines multiple global intelligence feeds with automated fallback emulation.</p>
           </div>
 
-          <div id="history-empty" class="empty-state hidden">
-            <i data-lucide="inbox"></i>
-            <p>No historical scans found.</p>
+          <div class="intel-cards-grid" id="intel-feeds-grid">
+            <!-- Cards populated dynamically -->
           </div>
-        </div>
-      </section>
+        </section>
 
-    </main>
+        <!-- ================= VIEW 6: WHITELIST ================= -->
+        <section id="view-whitelist" class="app-view">
+          <div class="view-header-title">
+            <h2>Organization Whitelist</h2>
+            <p>Trusted internal IP ranges, corporate domains, and verified benign file hashes.</p>
+          </div>
+          <div class="glass-card whitelist-card">
+            <p class="text-muted">No custom whitelist overrides configured. All indicators are evaluated directly against active intelligence engines and SSRF safety boundaries.</p>
+          </div>
+        </section>
 
-    <!-- Footer -->
-    <footer class="app-footer">
-      <div class="footer-content">
-        <span>ThreatScope Unified Multi-IOC Engine v1.0.0</span>
-        <span>•</span>
-        <span>Threat Feeds: VirusTotal • AbuseIPDB • URLScan.io • Safe Browsing • MalwareBazaar • RDAP</span>
-      </div>
-    </footer>
-
-  </div>
-
-  <!-- ================= MODALS & DRAWERS ================= -->
-
-  <!-- API Keys & Settings Modal -->
-  <div id="settings-modal" class="modal-backdrop hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div class="header-title">
-          <i data-lucide="key"></i>
-          <h2>Threat Intelligence API Keys & Settings</h2>
-        </div>
-        <button class="btn-close-modal" id="btn-close-settings">&times;</button>
-      </div>
-
-      <div class="modal-body">
-        <p class="settings-desc">Configure your free or commercial threat intelligence API keys. If keys are left empty, ThreatScope automatically runs simulated threat-intel heuristics.</p>
-
-        <form id="api-keys-form" class="keys-form">
-          <div class="form-field">
-            <div class="field-label-row">
-              <label for="key-virustotal">VirusTotal API Key:</label>
-              <span class="key-status-tag" id="status-virustotal">Mock Active</span>
-            </div>
-            <input type="password" id="key-virustotal" placeholder="Enter VirusTotal API key..." autocomplete="off">
-            <span class="field-help">Free tier: 4 req/min, 500 req/day. Covers Hashes, URLs, Domains, and IPs.</span>
+        <!-- ================= VIEW 7: API INTEGRATIONS ================= -->
+        <section id="view-api-keys" class="app-view">
+          <div class="view-header-title">
+            <h2>Threat Intelligence API Integrations</h2>
+            <p>Configure custom API keys for VirusTotal, AbuseIPDB, URLScan.io, Google Safe Browsing, and MalwareBazaar.</p>
           </div>
 
-          <div class="form-field">
-            <div class="field-label-row">
-              <label for="key-abuseipdb">AbuseIPDB API Key:</label>
-              <span class="key-status-tag" id="status-abuseipdb">Mock Active</span>
-            </div>
-            <input type="password" id="key-abuseipdb" placeholder="Enter AbuseIPDB API key..." autocomplete="off">
-            <span class="field-help">Free tier: 1,000 checks/day for IP reputation.</span>
-          </div>
+          <div class="glass-card api-settings-card">
+            <form id="api-integrations-form" class="keys-form">
+              <div class="form-field">
+                <div class="field-label-row">
+                  <label for="page-key-vt">VirusTotal API Key:</label>
+                  <span class="key-status-tag" id="page-tag-vt">Simulated / Active</span>
+                </div>
+                <input type="password" id="page-key-vt" placeholder="Enter VirusTotal v3 API key..." autocomplete="off">
+              </div>
 
-          <div class="form-field">
-            <div class="field-label-row">
-              <label for="key-urlscan">URLScan.io API Key:</label>
-              <span class="key-status-tag" id="status-urlscan">Mock Active</span>
-            </div>
-            <input type="password" id="key-urlscan" placeholder="Enter URLScan.io API key..." autocomplete="off">
-            <span class="field-help">Free tier: 5,000 searches/day for website sandboxing.</span>
-          </div>
+              <div class="form-field">
+                <div class="field-label-row">
+                  <label for="page-key-abuse">AbuseIPDB API Key:</label>
+                  <span class="key-status-tag" id="page-tag-abuse">Simulated / Active</span>
+                </div>
+                <input type="password" id="page-key-abuse" placeholder="Enter AbuseIPDB API key..." autocomplete="off">
+              </div>
 
-          <div class="form-field">
-            <div class="field-label-row">
-              <label for="key-safebrowsing">Google Safe Browsing API Key:</label>
-              <span class="key-status-tag" id="status-safebrowsing">Mock Active</span>
-            </div>
-            <input type="password" id="key-safebrowsing" placeholder="Enter Google Cloud Safe Browsing key..." autocomplete="off">
-            <span class="field-help">Free tier: 10,000 requests/day for phishing/malware detection.</span>
-          </div>
+              <div class="form-field">
+                <div class="field-label-row">
+                  <label for="page-key-urlscan">URLScan.io API Key:</label>
+                  <span class="key-status-tag" id="page-tag-urlscan">Simulated / Active</span>
+                </div>
+                <input type="password" id="page-key-urlscan" placeholder="Enter URLScan.io API key..." autocomplete="off">
+              </div>
 
-          <div class="form-field">
-            <div class="field-label-row">
-              <label for="key-malwarebazaar">MalwareBazaar Auth-Key (Optional):</label>
-              <span class="key-status-tag" id="status-malwarebazaar">Public Access</span>
-            </div>
-            <input type="password" id="key-malwarebazaar" placeholder="Enter Abuse.ch Auth-Key (Optional)..." autocomplete="off">
-            <span class="field-help">Free public malware hash lookups (Auth key optional).</span>
-          </div>
+              <div class="form-field">
+                <div class="field-label-row">
+                  <label for="page-key-gsb">Google Safe Browsing Key:</label>
+                  <span class="key-status-tag" id="page-tag-gsb">Simulated / Active</span>
+                </div>
+                <input type="password" id="page-key-gsb" placeholder="Enter Google Cloud Safe Browsing key..." autocomplete="off">
+              </div>
 
-          <div class="modal-footer">
-            <button type="button" class="btn-secondary" id="btn-cancel-settings">Cancel</button>
-            <button type="submit" class="btn-primary">Save API Configuration</button>
+              <div class="form-field">
+                <div class="field-label-row">
+                  <label for="page-key-mb">MalwareBazaar Auth-Key (Optional):</label>
+                  <span class="key-status-tag" id="page-tag-mb">Public Access</span>
+                </div>
+                <input type="password" id="page-key-mb" placeholder="Enter Abuse.ch Auth-Key..." autocomplete="off">
+              </div>
+
+              <div class="form-actions-right">
+                <button type="submit" class="btn-scan-main">Save API Integrations</button>
+              </div>
+            </form>
           </div>
-        </form>
-      </div>
+        </section>
+
+      </main>
     </div>
+
   </div>
 
-  <!-- Raw JSON Inspector Modal -->
-  <div id="raw-json-modal" class="modal-backdrop hidden">
+  <!-- Raw JSON Modal -->
+  <div id="dashboard-raw-json-modal" class="modal-backdrop hidden">
     <div class="modal-content modal-large">
       <div class="modal-header">
         <div class="header-title">
           <i data-lucide="code"></i>
-          <h2>Raw Threat Intelligence Response Data</h2>
+          <h2>Raw Threat Intelligence Response</h2>
         </div>
-        <button class="btn-close-modal" id="btn-close-raw-json">&times;</button>
+        <button class="btn-close-modal" id="btn-close-modal-json">&times;</button>
       </div>
       <div class="modal-body">
-        <pre class="json-code-block" id="raw-json-content"><code>{}</code></pre>
+        <pre class="json-code-block" id="modal-json-pre"><code>{}</code></pre>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification Container -->
+  <!-- Toast Alert Notifications -->
   <div id="toast-container" class="toast-container"></div>
 
-  <!-- Application Logic Scripts -->
+  <!-- Client Application Logic -->
   <script src="/static/js/app.js"></script>
 </body>
 </html>
