@@ -12,8 +12,8 @@ if __name__ == "__main__":
     from app.config import settings
     
     print("=" * 65)
-    print("🛡️  Starting ThreatScope — Unified Threat Detection Tool")
-    print(f"📡 Dashboard & API available at: http://{settings.HOST}:{settings.PORT}")
+    print("[ThreatScope] Unified Threat Detection Platform")
+    print(f"Dashboard & API available at: http://{settings.HOST}:{settings.PORT}")
     print("=" * 65)
     
     uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=True, app_dir=str(BACKEND_DIR))
