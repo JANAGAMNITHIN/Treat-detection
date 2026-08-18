@@ -192,59 +192,6 @@ code, pre {
   gap: 0.85rem;
 }
 
-.company-badge-card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.company-icon-box {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #2563eb, #38bdf8);
-  transform: rotate(45deg);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.company-logo-svg {
-  transform: rotate(-45deg);
-  width: 16px;
-  height: 16px;
-}
-
-.company-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.company-name {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1.1;
-}
-
-.company-sub {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-}
-
-.enterprise-tag {
-  display: inline-block;
-  font-size: 0.65rem;
-  padding: 0.1rem 0.4rem;
-  background-color: rgba(37, 99, 235, 0.2);
-  color: #93c5fd;
-  border-radius: 4px;
-  margin-top: 0.2rem;
-  width: fit-content;
-}
-
 .system-status-indicator {
   display: flex;
   align-items: center;
@@ -947,16 +894,12 @@ code, pre {
   color: var(--text-secondary);
 }
 
-.pill-tag-more {
-  background-color: var(--bg-card);
-  font-weight: 700;
-}
-
 .card-footer-link {
   display: flex;
   justify-content: flex-end;
   padding-top: 0.5rem;
   border-top: 1px solid var(--border-subtle);
+  gap: 0.75rem;
 }
 
 .center-footer {
@@ -1081,24 +1024,6 @@ code, pre {
   stroke-width: 16;
 }
 
-.donut-seg-red {
-  fill: none;
-  stroke: var(--color-red);
-  stroke-width: 16;
-}
-
-.donut-seg-orange {
-  fill: none;
-  stroke: var(--color-orange);
-  stroke-width: 16;
-}
-
-.donut-seg-yellow {
-  fill: none;
-  stroke: var(--color-yellow);
-  stroke-width: 16;
-}
-
 .donut-seg-green {
   fill: none;
   stroke: var(--color-green);
@@ -1133,7 +1058,6 @@ code, pre {
 .donut-risk-pill {
   font-size: 0.65rem;
   font-weight: 700;
-  color: var(--color-red);
   margin-top: 0.15rem;
 }
 
@@ -1275,6 +1199,90 @@ code, pre {
   text-align: right;
 }
 
+/* ================= 5. REPORT GENERATOR VIEW ================= */
+.report-generator-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.report-controls-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 1.25rem;
+}
+
+.report-select-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  max-width: 500px;
+}
+
+.report-select-group label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.report-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.report-preview-container {
+  min-height: 400px;
+  background-color: var(--bg-card-alt);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+}
+
+.report-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 350px;
+  color: var(--text-muted);
+  text-align: center;
+  gap: 1rem;
+}
+
+.report-empty-state svg {
+  width: 48px;
+  height: 48px;
+}
+
+.report-document {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 2rem;
+  color: #f8fafc;
+}
+
+.report-doc-header {
+  border-bottom: 2px solid #2563eb;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.report-doc-header h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
 /* Other Views (Bulk, History, Settings) */
 .view-header-title {
   margin-bottom: 1.5rem;
@@ -1315,6 +1323,7 @@ code, pre {
   padding: 0.5rem 0.85rem;
   font-size: 0.85rem;
   outline: none;
+  flex: 1;
 }
 
 .form-select:focus, .form-input:focus {

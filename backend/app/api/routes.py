@@ -5,10 +5,12 @@ import io
 import time
 from typing import List, Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, desc
 
 from app.config import settings
+from app.models.db_models import ScanRecord
 from app.database import (
     get_db,
     async_session_factory,
@@ -53,6 +55,36 @@ async def health_check(session: AsyncSession = Depends(get_db)):
         configured_providers=configured,
         timestamp=datetime.utcnow(),
     )
+
+@router.get("/stats")
+async def get_dashboard_stats(session: AsyncSession = Depends(get_db)):
+    """
+    Returns real-time aggregated scan counts, verdict distributions,
+    average confidence score, and chronological trend series for sparklines.
+    """
+    total_scans = (await session.execute(select(func.count(ScanRecord.id)))).scalar() or 0
+    malicious = (await session.execute(select(func.count(ScanRecord.id)).where(ScanRecord.verdict == "malicious"))).scalar() or 0
+    suspicious = (await session.execute(select(func.count(ScanRecord.id)).where(ScanRecord.verdict == "suspicious"))).scalar() or 0
+    clean = (await session.execute(select(func.count(ScanRecord.id)).where(ScanRecord.verdict == "clean"))).scalar() or 0
+    unknown = (await session.execute(select(func.count(ScanRecord.id)).where(ScanRecord.verdict == "unknown"))).scalar() or 0
+    
+    avg_score_raw = (await session.execute(select(func.avg(ScanRecord.confidence_score)))).scalar() or 0.0
+    avg_score = round(float(avg_score_raw), 1)
+
+    # Fetch last 15 scans for real sparkline trend curves
+    recent_query = select(ScanRecord.confidence_score, ScanRecord.verdict).order_by(desc(ScanRecord.scanned_at)).limit(15)
+    recent_rows = (await session.execute(recent_query)).all()
+    trend_scores = [float(r[0]) for r in reversed(recent_rows)]
+
+    return {
+        "total": total_scans,
+        "malicious": malicious,
+        "suspicious": suspicious,
+        "clean": clean,
+        "unknown": unknown,
+        "avg_score": avg_score,
+        "trend_scores": trend_scores,
+    }
 
 @router.post("/classify", response_model=IOCClassification)
 async def classify_indicator(req: ScanRequest):
@@ -388,6 +420,106 @@ async def get_history_detail(scan_id: str, session: AsyncSession = Depends(get_d
     if not record:
         raise HTTPException(status_code=404, detail="Scan record not found.")
     return record.to_dict()
+
+@router.get("/reports/{scan_id}/download")
+async def download_scan_report_html(scan_id: str, session: AsyncSession = Depends(get_db)):
+    """
+    Generates a standalone, formatted, printable Threat Intelligence Report for an indicator.
+    """
+    record = await get_scan_by_id(session, scan_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Scan record not found.")
+    
+    data = record.to_dict()
+    verdict_color = "#ef4444" if data["verdict"] == "malicious" else ("#f97316" if data["verdict"] == "suspicious" else "#10b981")
+    
+    html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Threat Intelligence Report — {data["defanged_indicator"]}</title>
+  <style>
+    body {{ font-family: 'Helvetica Neue', Arial, sans-serif; background: #ffffff; color: #1e293b; padding: 40px; margin: 0; }}
+    .header {{ border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }}
+    .title {{ font-size: 24px; font-weight: bold; color: #0f172a; margin: 0; }}
+    .subtitle {{ font-size: 13px; color: #64748b; margin-top: 4px; }}
+    .meta-box {{ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 25px; }}
+    .verdict-badge {{ display: inline-block; background: {verdict_color}; color: #ffffff; font-weight: bold; padding: 6px 14px; border-radius: 6px; font-size: 14px; text-transform: uppercase; }}
+    .score-circle {{ font-size: 28px; font-weight: bold; color: {verdict_color}; }}
+    .grid-2 {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
+    .table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
+    .table th, .table td {{ border: 1px solid #e2e8f0; padding: 10px 12px; font-size: 13px; text-align: left; }}
+    .table th {{ background: #f1f5f9; font-weight: 600; color: #475569; }}
+    .code {{ font-family: 'Courier New', monospace; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 13px; }}
+    .bullet {{ margin-bottom: 8px; font-size: 14px; line-height: 1.5; }}
+    .print-btn {{ background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }}
+    @media print {{ .no-print {{ display: none; }} body {{ padding: 0; }} }}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1 class="title">THREATSCOPE THREAT INTELLIGENCE REPORT</h1>
+      <div class="subtitle">Generated on {datetime.utcnow().strftime('%B %d, %Y at %H:%M:%S UTC')} • Reference ID: {data["id"]}</div>
+    </div>
+    <div class="no-print">
+      <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+  </div>
+
+  <div class="meta-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span class="verdict-badge">{data["verdict"]}</span>
+        <span style="font-size:16px;font-weight:600;margin-left:12px;">{data["risk_level"]} RISK</span>
+      </div>
+      <div style="text-align:right;">
+        <span style="font-size:12px;color:#64748b;display:block;">CONFIDENCE SCORE</span>
+        <span class="score-circle">{int(data["confidence_score"])} / 100</span>
+      </div>
+    </div>
+    <div style="margin-top:20px;font-size:15px;">
+      <strong>Indicator (Defanged):</strong> <span class="code">{data["defanged_indicator"]}</span>
+    </div>
+    <div style="margin-top:8px;font-size:14px;color:#64748b;">
+      <strong>Type:</strong> {data["type"].upper()} &nbsp;|&nbsp; <strong>Scanned At:</strong> {data["scanned_at"]}
+    </div>
+  </div>
+
+  <h3>Scoring & Risk Rationale</h3>
+  <div class="meta-box">
+    {''.join([f'<div class="bullet">• <strong>{f["source"]}:</strong> {f["reason"]} (+{f["points_contributed"]} pts)</div>' for f in data.get("scoring_breakdown", [])]) or '<div>No adverse threat points found. Indicator is clean.</div>'}
+  </div>
+
+  <h3>Threat Intelligence Provider Summary</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Provider Name</th>
+        <th>Verdict</th>
+        <th>Confidence</th>
+        <th>Analysis Summary</th>
+      </tr>
+    </thead>
+    <tbody>
+      {''.join([f'<tr><td><strong>{s["name"]}</strong></td><td>{s["verdict"].upper()}</td><td>{s.get("confidence_score", 0)}%</td><td>{s.get("summary", "N/A")}</td></tr>' for s in data.get("sources", [])])}
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:30px;">Actionable Security Recommendations</h3>
+  <div class="meta-box">
+    <div class="bullet">• <strong>Access Restriction:</strong> Immediately block or sinkhole communication with <span class="code">{data["defanged_indicator"]}</span> in firewalls and proxies.</div>
+    <div class="bullet">• <strong>Internal Audit:</strong> Search internal DNS query logs, SIEM telemetry, and proxy events for historical connections.</div>
+    <div class="bullet">• <strong>Endpoint Verification:</strong> Check endpoint protection logs for related artifact hashes or execution chains.</div>
+  </div>
+
+  <div style="margin-top:40px;text-align:center;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:20px;">
+    Report produced automatically by ThreatScope Unified Threat Detection Platform • Confidential
+  </div>
+</body>
+</html>"""
+
+    return HTMLResponse(content=html_content)
 
 @router.delete("/history")
 async def clear_history(session: AsyncSession = Depends(get_db)):

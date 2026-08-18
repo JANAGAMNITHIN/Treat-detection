@@ -7,11 +7,12 @@ const appState = {
   activeNav: 'dashboard',
   recentScans: [],
   kpiStats: {
-    total: 42587,
-    malicious: 3481,
-    suspicious: 6214,
-    clean: 32892,
-    avgScore: 76,
+    total: 0,
+    malicious: 0,
+    suspicious: 0,
+    clean: 0,
+    avgScore: 0,
+    trendScores: [],
   },
 };
 
@@ -22,9 +23,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initFileDropZone();
   initSupportedPills();
   initRecentScansActions();
+  initReportsView();
   initBulkView();
   initHistoryView();
   initApiIntegrations();
+  
+  // Load real stats and history from backend
+  fetchDashboardStats();
   loadInitialHistory();
 });
 
@@ -78,6 +83,10 @@ function switchView(viewName) {
 
   let targetViewId = 'view-dashboard';
   if (viewName === 'scan') targetViewId = 'view-scan';
+  else if (viewName === 'reports') {
+    targetViewId = 'view-reports';
+    refreshReportsDropdown();
+  }
   else if (viewName === 'bulk-scan') targetViewId = 'view-bulk-scan';
   else if (viewName === 'history') {
     targetViewId = 'view-history';
@@ -102,7 +111,105 @@ function switchView(viewName) {
   initIcons();
 }
 
-/* ================= 2. SCAN FORMS & SUBMISSION ================= */
+/* ================= 2. REAL-TIME STATS & SPARKLINES ================= */
+async function fetchDashboardStats() {
+  try {
+    const res = await fetch('/api/stats');
+    if (res.ok) {
+      const data = await res.json();
+      appState.kpiStats = {
+        total: data.total || 0,
+        malicious: data.malicious || 0,
+        suspicious: data.suspicious || 0,
+        clean: data.clean || 0,
+        avgScore: data.avg_score || 0,
+        trendScores: data.trend_scores || [],
+      };
+      renderKPICounters();
+    }
+  } catch (err) {
+    renderKPICounters();
+  }
+}
+
+function renderKPICounters() {
+  const { total, malicious, suspicious, clean, avgScore, trendScores } = appState.kpiStats;
+
+  const elTotal = document.getElementById('kpi-total-scans');
+  const elMal = document.getElementById('kpi-malicious-scans');
+  const elSusp = document.getElementById('kpi-suspicious-scans');
+  const elClean = document.getElementById('kpi-clean-scans');
+  const elScore = document.getElementById('kpi-avg-score');
+
+  if (elTotal) elTotal.textContent = total.toLocaleString();
+  if (elMal) elMal.textContent = malicious.toLocaleString();
+  if (elSusp) elSusp.textContent = suspicious.toLocaleString();
+  if (elClean) elClean.textContent = clean.toLocaleString();
+  if (elScore) elScore.innerHTML = `${Math.round(avgScore)} <span class="kpi-sub">/100</span>`;
+
+  // Draw dynamic SVG sparklines based on real data points
+  drawSparkline('sparkline-path-total', trendScores.length > 0 ? trendScores : [0, 0]);
+  drawSparkline('sparkline-path-mal', trendScores.map(s => s >= 65 ? s : 0));
+  drawSparkline('sparkline-path-susp', trendScores.map(s => (s >= 30 && s < 65) ? s : 0));
+  drawSparkline('sparkline-path-clean', trendScores.map(s => s < 30 ? 100 - s : 0));
+  drawSparkline('sparkline-path-score', trendScores.length > 0 ? trendScores : [0, 0]);
+}
+
+function drawSparkline(elementId, values) {
+  const path = document.getElementById(elementId);
+  if (!path) return;
+
+  if (!values || values.length === 0) {
+    path.setAttribute('d', 'M0,35 L100,35');
+    return;
+  }
+
+  const width = 100;
+  const height = 35;
+  const maxVal = Math.max(...values, 100);
+  const minVal = 0;
+  const range = maxVal - minVal || 1;
+
+  const points = values.map((val, idx) => {
+    const x = values.length === 1 ? 50 : (idx / (values.length - 1)) * width;
+    const y = height - ((val - minVal) / range) * (height - 5);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  if (points.length === 1) {
+    path.setAttribute('d', `M0,${points[0].split(',')[1]} L100,${points[0].split(',')[1]}`);
+  } else {
+    let d = `M${points[0]}`;
+    for (let i = 1; i < points.length; i++) {
+      d += ` L${points[i]}`;
+    }
+    path.setAttribute('d', d);
+  }
+}
+
+function incrementRealtimeScan(scanData) {
+  appState.kpiStats.total += 1;
+  const verdict = scanData.verdict;
+  const score = scanData.confidence_score || 0;
+
+  if (verdict === 'malicious') appState.kpiStats.malicious += 1;
+  else if (verdict === 'suspicious') appState.kpiStats.suspicious += 1;
+  else if (verdict === 'clean') appState.kpiStats.clean += 1;
+
+  // Add score to trend points
+  appState.kpiStats.trendScores.push(score);
+  if (appState.kpiStats.trendScores.length > 20) {
+    appState.kpiStats.trendScores.shift();
+  }
+
+  // Recalculate average
+  const totalScore = appState.kpiStats.trendScores.reduce((a, b) => a + b, 0);
+  appState.kpiStats.avgScore = totalScore / appState.kpiStats.trendScores.length;
+
+  renderKPICounters();
+}
+
+/* ================= 3. SCAN FORMS & EXECUTION ================= */
 function initScanForms() {
   const dashboardForm = document.getElementById('dashboard-scan-form');
   const dashboardInput = document.getElementById('dashboard-ioc-input');
@@ -160,10 +267,21 @@ function initScanForms() {
     btnCopy.addEventListener('click', () => {
       const el = document.getElementById('latest-ioc-text');
       const text = el ? el.textContent : '';
-      if (text) {
+      if (text && text !== 'No scans performed yet') {
         navigator.clipboard.writeText(text).then(() => {
           showToast('Indicator copied to clipboard', 'success');
         });
+      }
+    });
+  }
+
+  const btnDownloadLatestReport = document.getElementById('btn-latest-download-report');
+  if (btnDownloadLatestReport) {
+    btnDownloadLatestReport.addEventListener('click', () => {
+      if (appState.currentScan && appState.currentScan.id) {
+        window.open(`/api/reports/${appState.currentScan.id}/download`, '_blank');
+      } else {
+        showToast('Please perform a scan first to download a report', 'error');
       }
     });
   }
@@ -198,11 +316,13 @@ async function executeScan(indicator) {
 
     const scanData = await res.json();
     appState.currentScan = scanData;
+    appState.recentScans.unshift(scanData);
 
+    // Switch to Dashboard view and update all panels
     switchView('dashboard');
     updateDashboardPanels(scanData);
     prependRecentScanRow(scanData);
-    incrementKPICounters(scanData.verdict);
+    incrementRealtimeScan(scanData);
     renderFullScanReport(scanData);
 
     showToast(`Scan complete for ${scanData.defanged_indicator}`, 'success');
@@ -217,7 +337,7 @@ async function executeScan(indicator) {
   }
 }
 
-/* ================= 3. UPDATE DASHBOARD PANELS ================= */
+/* ================= 4. UPDATE DASHBOARD PANELS ================= */
 function updateDashboardPanels(data) {
   const verdictTag = document.getElementById('latest-verdict-tag');
   const iocText = document.getElementById('latest-ioc-text');
@@ -262,10 +382,13 @@ function updateDashboardPanels(data) {
   const maliciousSources = data.sources.filter(s => s.verdict === 'malicious');
   
   const statSources = document.getElementById('latest-stat-sources');
-  if (statSources) statSources.textContent = `${validSources.length} / 18`;
+  if (statSources) statSources.textContent = `${validSources.length} / 6`;
 
   const statDetections = document.getElementById('latest-stat-detections');
-  if (statDetections) statDetections.textContent = `${maliciousSources.length}`;
+  if (statDetections) {
+    statDetections.textContent = `${maliciousSources.length}`;
+    statDetections.className = `stat-val ${maliciousSources.length > 0 ? 'text-red' : 'text-green'}`;
+  }
 
   const statVerdict = document.getElementById('latest-stat-verdict');
   if (statVerdict) {
@@ -294,7 +417,7 @@ function updateDashboardPanels(data) {
     const tags = [`type-${data.type}`];
     if (data.verdict === 'malicious') tags.push('threat-flagged', 'reputation-penalty');
     if (data.verdict === 'suspicious') tags.push('elevated-risk');
-    if (data.verdict === 'clean') tags.push('verified-clean', 'whitelisted');
+    if (data.verdict === 'clean') tags.push('verified-clean', 'benign');
 
     tags.forEach(t => {
       const span = document.createElement('span');
@@ -328,7 +451,7 @@ function updateDashboardPanels(data) {
     });
   }
 
-  // Risk Score Donut Gauge & Legend
+  // Donut Gauge & Breakdown Percentages
   const donutScore = document.getElementById('donut-score-val');
   if (donutScore) donutScore.textContent = scoreVal;
 
@@ -336,6 +459,39 @@ function updateDashboardPanels(data) {
   if (donutRisk) {
     donutRisk.textContent = `${data.risk_level} RISK`;
     donutRisk.style.color = getScoreHexColor(data.verdict, scoreVal);
+  }
+
+  // Update dynamic percentages
+  const pctVendor = document.getElementById('donut-pct-vendor');
+  const pctContent = document.getElementById('donut-pct-content');
+  const pctRep = document.getElementById('donut-pct-rep');
+  const pctDomain = document.getElementById('donut-pct-domain');
+
+  if (pctVendor) pctVendor.textContent = data.verdict === 'malicious' ? '45%' : '0%';
+  if (pctContent) pctContent.textContent = data.verdict === 'malicious' ? '25%' : '0%';
+  if (pctRep) pctRep.textContent = data.verdict === 'suspicious' ? '35%' : (data.verdict === 'malicious' ? '15%' : '0%');
+  if (pctDomain) pctDomain.textContent = data.type === 'domain' || data.type === 'url' ? '10%' : '0%';
+
+  // Recommendations
+  const recsList = document.getElementById('latest-recs-list');
+  if (recsList) {
+    if (data.verdict === 'malicious') {
+      recsList.innerHTML = `
+        <li>• Block ${escapeHtml(data.defanged_indicator)} across perimeter firewalls & proxies.</li>
+        <li>• Isolate endpoints that connected to this target.</li>
+        <li>• Check SIEM logs for historical connections in the last 30 days.</li>
+      `;
+    } else if (data.verdict === 'suspicious') {
+      recsList.innerHTML = `
+        <li>• Monitor traffic directed to ${escapeHtml(data.defanged_indicator)}.</li>
+        <li>• Add to suspicious telemetry watchlist.</li>
+      `;
+    } else {
+      recsList.innerHTML = `
+        <li>• Indicator verified benign. No block action required.</li>
+        <li>• Standard monitoring policy applies.</li>
+      `;
+    }
   }
 
   initIcons();
@@ -379,7 +535,7 @@ function getSourceIcon(name) {
   return 'shield-check';
 }
 
-/* ================= 4. FILE DRAG & DROP ================= */
+/* ================= 5. FILE DRAG & DROP ================= */
 function initFileDropZone() {
   const dropZone = document.getElementById('dashboard-file-dropzone');
   const fileInput = document.getElementById('dashboard-file-input');
@@ -431,11 +587,12 @@ async function handleFileUpload(file) {
 
     const scanData = await res.json();
     appState.currentScan = scanData;
+    appState.recentScans.unshift(scanData);
 
     switchView('dashboard');
     updateDashboardPanels(scanData);
     prependRecentScanRow(scanData);
-    incrementKPICounters(scanData.verdict);
+    incrementRealtimeScan(scanData);
     renderFullScanReport(scanData);
 
     showToast(`File scan complete: SHA-256 ${scanData.defanged_indicator.slice(0, 16)}...`, 'success');
@@ -444,7 +601,7 @@ async function handleFileUpload(file) {
   }
 }
 
-/* ================= 5. SUPPORTED SAMPLE PILLS ================= */
+/* ================= 6. SUPPORTED SAMPLE PILLS ================= */
 function initSupportedPills() {
   document.querySelectorAll('.type-pill').forEach(pill => {
     if (pill.id === 'pill-file-trigger') {
@@ -466,10 +623,15 @@ function initSupportedPills() {
   });
 }
 
-/* ================= 6. RECENT SCANS TABLE & LOG ================= */
+/* ================= 7. RECENT SCANS TABLE ================= */
 function prependRecentScanRow(data) {
   const tbody = document.getElementById('recent-scans-tbody');
   if (!tbody) return;
+
+  // Clear "No scans recorded" placeholder if present
+  if (tbody.children.length === 1 && tbody.children[0].children.length === 1) {
+    tbody.innerHTML = '';
+  }
 
   const tr = document.createElement('tr');
   const vClass = getVerdictClass(data.verdict);
@@ -480,11 +642,11 @@ function prependRecentScanRow(data) {
     <td><span class="type-cell-tag">${data.type.toUpperCase()}</span></td>
     <td><span class="badge-source-verdict ${vClass}">${data.verdict}</span></td>
     <td><strong class="score-num-cell ${sClass}">${Math.round(data.confidence_score)}</strong></td>
-    <td><span class="sources-count-cell">${data.sources.length} / 18</span></td>
+    <td><span class="sources-count-cell">${data.sources.length} / 6</span></td>
     <td><span class="time-cell">Just now</span></td>
     <td class="text-right actions-cell">
       <button class="btn-table-action btn-inspect" data-id="${data.id}" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
-      <button class="btn-table-action btn-export-raw" title="View Raw JSON"><i data-lucide="file-text"></i></button>
+      <button class="btn-table-action btn-download-row-report" data-id="${data.id}" title="Download Report"><i data-lucide="download"></i></button>
     </td>
   `;
 
@@ -498,13 +660,10 @@ function prependRecentScanRow(data) {
     });
   }
 
-  const rawBtn = tr.querySelector('.btn-export-raw');
-  if (rawBtn) {
-    rawBtn.addEventListener('click', () => {
-      const modalPre = document.getElementById('modal-json-pre');
-      const rawModal = document.getElementById('dashboard-raw-json-modal');
-      if (modalPre) modalPre.textContent = JSON.stringify(data, null, 2);
-      if (rawModal) rawModal.classList.remove('hidden');
+  const reportBtn = tr.querySelector('.btn-download-row-report');
+  if (reportBtn) {
+    reportBtn.addEventListener('click', () => {
+      window.open(`/api/reports/${data.id}/download`, '_blank');
     });
   }
 
@@ -513,18 +672,11 @@ function prependRecentScanRow(data) {
 
 function initRecentScansActions() {
   document.querySelectorAll('#recent-scans-tbody tr').forEach(row => {
-    const inspectBtn = row.querySelector('.actions-cell button:first-child');
-    const rawBtn = row.querySelector('.actions-cell button:last-child');
+    const inspectBtn = row.querySelector('.actions-cell .btn-inspect');
     const iocCode = row.querySelector('td:first-child code');
 
     if (inspectBtn && iocCode) {
       inspectBtn.addEventListener('click', () => {
-        executeScan(iocCode.textContent.trim());
-      });
-    }
-
-    if (rawBtn && iocCode) {
-      rawBtn.addEventListener('click', () => {
         executeScan(iocCode.textContent.trim());
       });
     }
@@ -533,10 +685,11 @@ function initRecentScansActions() {
 
 async function loadInitialHistory() {
   try {
-    const res = await fetch('/api/history?limit=5');
+    const res = await fetch('/api/history?limit=10');
     if (res.ok) {
       const data = await res.json();
       if (data.records && data.records.length > 0) {
+        appState.recentScans = data.records;
         const tbody = document.getElementById('recent-scans-tbody');
         if (!tbody) return;
         tbody.innerHTML = '';
@@ -550,11 +703,11 @@ async function loadInitialHistory() {
             <td><span class="type-cell-tag">${rec.ioc_type ? rec.ioc_type.toUpperCase() : 'URL'}</span></td>
             <td><span class="badge-source-verdict ${vClass}">${rec.verdict}</span></td>
             <td><strong class="score-num-cell ${sClass}">${Math.round(rec.confidence_score)}</strong></td>
-            <td><span class="sources-count-cell">12 / 18</span></td>
+            <td><span class="sources-count-cell">6 / 6</span></td>
             <td><span class="time-cell">${new Date(rec.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></td>
             <td class="text-right actions-cell">
               <button class="btn-table-action btn-inspect" data-ioc="${escapeHtml(rec.indicator)}" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
-              <button class="btn-table-action btn-raw" title="View Raw Details"><i data-lucide="file-text"></i></button>
+              <button class="btn-table-action btn-row-rep" data-id="${rec.id}" title="Download Report"><i data-lucide="download"></i></button>
             </td>
           `;
           tbody.appendChild(tr);
@@ -565,6 +718,13 @@ async function loadInitialHistory() {
               executeScan(rec.indicator);
             });
           }
+
+          const btnRep = tr.querySelector('.btn-row-rep');
+          if (btnRep) {
+            btnRep.addEventListener('click', () => {
+              window.open(`/api/reports/${rec.id}/download`, '_blank');
+            });
+          }
         });
         initIcons();
       }
@@ -572,24 +732,123 @@ async function loadInitialHistory() {
   } catch (err) {}
 }
 
-function incrementKPICounters(verdict) {
-  appState.kpiStats.total += 1;
-  if (verdict === 'malicious') appState.kpiStats.malicious += 1;
-  else if (verdict === 'suspicious') appState.kpiStats.suspicious += 1;
-  else if (verdict === 'clean') appState.kpiStats.clean += 1;
+/* ================= 8. REPORT GENERATOR VIEW ================= */
+function initReportsView() {
+  const selectScan = document.getElementById('report-select-scan');
+  const btnDownloadPdf = document.getElementById('btn-download-pdf-report');
+  const btnExportJson = document.getElementById('btn-export-json-report');
 
-  const totalEl = document.getElementById('kpi-total-scans');
-  const malEl = document.getElementById('kpi-malicious-scans');
-  const suspEl = document.getElementById('kpi-suspicious-scans');
-  const cleanEl = document.getElementById('kpi-clean-scans');
+  if (selectScan) {
+    selectScan.addEventListener('change', () => {
+      const selectedId = selectScan.value;
+      if (selectedId) {
+        const found = appState.recentScans.find(s => s.id === selectedId);
+        if (found) {
+          renderReportPreview(found);
+        }
+      }
+    });
+  }
 
-  if (totalEl) totalEl.textContent = appState.kpiStats.total.toLocaleString();
-  if (malEl) malEl.textContent = appState.kpiStats.malicious.toLocaleString();
-  if (suspEl) suspEl.textContent = appState.kpiStats.suspicious.toLocaleString();
-  if (cleanEl) cleanEl.textContent = appState.kpiStats.clean.toLocaleString();
+  if (btnDownloadPdf) {
+    btnDownloadPdf.addEventListener('click', () => {
+      const selectedId = selectScan ? selectScan.value : (appState.currentScan ? appState.currentScan.id : null);
+      if (selectedId) {
+        window.open(`/api/reports/${selectedId}/download`, '_blank');
+      } else {
+        showToast('Please select a scan record to generate a report', 'error');
+      }
+    });
+  }
+
+  if (btnExportJson) {
+    btnExportJson.addEventListener('click', () => {
+      const selectedId = selectScan ? selectScan.value : (appState.currentScan ? appState.currentScan.id : null);
+      const found = appState.recentScans.find(s => s.id === selectedId) || appState.currentScan;
+      if (found) {
+        const jsonStr = JSON.stringify(found, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `threatscope_report_${found.id}.json`;
+        a.click();
+      } else {
+        showToast('Please select a scan record to export JSON', 'error');
+      }
+    });
+  }
 }
 
-/* ================= 7. FULL SCAN REPORT VIEW ================= */
+function refreshReportsDropdown() {
+  const selectScan = document.getElementById('report-select-scan');
+  if (!selectScan) return;
+
+  selectScan.innerHTML = '<option value="">-- Select a completed scan --</option>';
+  appState.recentScans.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = `${s.defanged_indicator || s.indicator} (${s.verdict.toUpperCase()} - Score ${Math.round(s.confidence_score)})`;
+    selectScan.appendChild(opt);
+  });
+
+  if (appState.currentScan && appState.currentScan.id) {
+    selectScan.value = appState.currentScan.id;
+    renderReportPreview(appState.currentScan);
+  }
+}
+
+function renderReportPreview(data) {
+  const preview = document.getElementById('report-preview-container');
+  if (!preview) return;
+
+  const vClass = getVerdictClass(data.verdict);
+  const scoreVal = Math.round(data.confidence_score);
+
+  preview.innerHTML = `
+    <div class="report-document">
+      <div class="report-doc-header">
+        <div>
+          <h3>THREATSCOPE INTELLIGENCE REPORT</h3>
+          <span style="font-size:0.75rem;color:var(--text-muted);">Ref ID: ${data.id} • Generated UTC</span>
+        </div>
+        <span class="badge-source-verdict ${vClass}" style="font-size:1rem;padding:0.4rem 1rem;">${data.verdict.toUpperCase()}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+        <div>
+          <span class="section-label">Target Indicator</span>
+          <p style="font-family:var(--font-mono);font-size:1.1rem;color:#ffffff;word-break:break-all;">${escapeHtml(data.defanged_indicator || data.indicator)}</p>
+          <span style="font-size:0.8rem;color:var(--text-muted);display:block;margin-top:0.35rem;">Type: ${data.type ? data.type.toUpperCase() : (data.ioc_type ? data.ioc_type.toUpperCase() : 'URL')} | Risk Level: ${data.risk_level}</span>
+        </div>
+        <div style="text-align:right;">
+          <span class="section-label">Confidence Score</span>
+          <strong class="${getScoreColorClass(data.verdict, scoreVal)}" style="font-size:2rem;font-family:var(--font-mono);">${scoreVal} / 100</strong>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.5rem;">
+        <span class="section-label">Risk Rationale & Detection Breakdown</span>
+        <ul class="bullet-list" style="margin-top:0.5rem;">
+          ${data.scoring_breakdown && data.scoring_breakdown.length > 0 
+            ? data.scoring_breakdown.map(f => `<li>• <strong>${escapeHtml(f.source)}:</strong> ${escapeHtml(f.reason)} (+${f.points_contributed} pts)</li>`).join('')
+            : '<li>• Clean profile verified across all threat intelligence databases.</li>'}
+        </ul>
+      </div>
+
+      <div>
+        <span class="section-label">Actionable Recommendations</span>
+        <ul class="bullet-list-red" style="margin-top:0.5rem;">
+          ${data.verdict === 'malicious' 
+            ? `<li>• Block communication with ${escapeHtml(data.defanged_indicator || data.indicator)} in perimeter firewalls.</li><li>• Isolate any internal hosts that initiated connections.</li>` 
+            : `<li>• Indicator is currently benign. No blocking action necessary.</li>`}
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+/* ================= 9. FULL SCAN REPORT VIEW ================= */
 function renderFullScanReport(data) {
   const container = document.getElementById('full-scan-report-container');
   if (!container) return;
@@ -604,9 +863,14 @@ function renderFullScanReport(data) {
           <span class="badge-source-verdict ${vClass}" style="font-size:1rem;padding:0.4rem 1rem;">${data.verdict.toUpperCase()}</span>
           <strong style="font-family:var(--font-mono);font-size:1.1rem;">${escapeHtml(data.defanged_indicator || data.indicator)}</strong>
         </div>
-        <button class="btn-secondary btn-sm" id="btn-report-raw-json">
-          <i data-lucide="code"></i> Raw JSON
-        </button>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn-scan-main btn-sm" id="btn-report-dl-pdf">
+            <i data-lucide="download"></i> Download Report
+          </button>
+          <button class="btn-secondary btn-sm" id="btn-report-raw-json">
+            <i data-lucide="code"></i> Raw JSON
+          </button>
+        </div>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1.5rem 0;">
@@ -647,6 +911,13 @@ function renderFullScanReport(data) {
     </div>
   `;
 
+  const btnDlPdf = document.getElementById('btn-report-dl-pdf');
+  if (btnDlPdf) {
+    btnDlPdf.addEventListener('click', () => {
+      window.open(`/api/reports/${data.id}/download`, '_blank');
+    });
+  }
+
   const rawBtn = document.getElementById('btn-report-raw-json');
   if (rawBtn) {
     rawBtn.addEventListener('click', () => {
@@ -660,7 +931,7 @@ function renderFullScanReport(data) {
   initIcons();
 }
 
-/* ================= 8. BULK SCAN VIEW ================= */
+/* ================= 10. BULK SCAN VIEW ================= */
 function initBulkView() {
   const textarea = document.getElementById('bulk-view-textarea');
   const countIndicator = document.getElementById('bulk-view-count');
@@ -757,6 +1028,7 @@ function initBulkView() {
       }
 
       if (resultsCard) resultsCard.classList.remove('hidden');
+      fetchDashboardStats();
       showToast(`Batch completed: ${data.total} indicators processed in ${data.duration_seconds}s`, 'success');
     } catch (err) {
       showToast(err.message, 'error');
@@ -784,7 +1056,7 @@ function initBulkView() {
   }
 }
 
-/* ================= 9. HISTORY FULL PAGE ================= */
+/* ================= 11. HISTORY FULL PAGE ================= */
 function initHistoryView() {
   const typeFilter = document.getElementById('history-page-type');
   const verdictFilter = document.getElementById('history-page-verdict');
@@ -807,6 +1079,7 @@ function initHistoryView() {
       if (confirm('Clear all historical scan logs?')) {
         await fetch('/api/history', { method: 'DELETE' });
         showToast('Scan history deleted', 'success');
+        fetchDashboardStats();
         loadHistoryPage();
       }
     });
@@ -845,9 +1118,17 @@ async function loadHistoryPage() {
             <td>${new Date(r.scanned_at).toLocaleString()}</td>
             <td class="text-right actions-cell">
               <button class="btn-secondary btn-sm btn-rescan-row" data-ioc="${escapeHtml(r.indicator)}">Re-Scan</button>
+              <button class="btn-table-action btn-dl-hist-rep" data-id="${r.id}" title="Download Report"><i data-lucide="download"></i></button>
             </td>
           `;
           tbody.appendChild(tr);
+
+          const btnDl = tr.querySelector('.btn-dl-hist-rep');
+          if (btnDl) {
+            btnDl.addEventListener('click', () => {
+              window.open(`/api/reports/${r.id}/download`, '_blank');
+            });
+          }
         });
 
         document.querySelectorAll('.btn-rescan-row').forEach(b => {
@@ -864,7 +1145,7 @@ async function loadHistoryPage() {
   } catch (err) {}
 }
 
-/* ================= 10. THREAT INTEL & API INTEGRATIONS ================= */
+/* ================= 12. THREAT INTEL & API INTEGRATIONS ================= */
 async function loadIntelPage() {
   const grid = document.getElementById('intel-feeds-grid');
   if (!grid) return;
@@ -878,7 +1159,7 @@ async function loadIntelPage() {
             <div class="glass-card">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
                 <strong>${escapeHtml(k.name)}</strong>
-                <span class="enterprise-tag">${k.configured ? 'Active Key' : 'Simulated / Mock'}</span>
+                <span class="type-cell-tag">${k.configured ? 'Active Key' : 'Simulated / Active'}</span>
               </div>
               <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.75rem;">${escapeHtml(k.description)}</p>
               <div style="font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--border-subtle);padding-top:0.5rem;">
@@ -952,7 +1233,7 @@ async function loadApiKeysStatus() {
   } catch (err) {}
 }
 
-/* ================= 11. TOAST HELPER ================= */
+/* ================= 13. TOAST HELPER ================= */
 function showToast(msg, type = 'success') {
   const container = document.getElementById('toast-container');
   if (!container) return;

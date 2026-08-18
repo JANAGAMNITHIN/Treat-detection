@@ -42,20 +42,20 @@
           <i data-lucide="layers"></i>
           <span>Bulk Scan</span>
         </button>
-        <button class="nav-item" data-nav="history">
-          <i data-lucide="clock"></i>
-          <span>History</span>
-        </button>
         <button class="nav-item" data-nav="reports">
           <i data-lucide="file-text"></i>
           <span>Reports</span>
+        </button>
+        <button class="nav-item" data-nav="history">
+          <i data-lucide="clock"></i>
+          <span>History</span>
         </button>
         <button class="nav-item" data-nav="intel">
           <i data-lucide="shield-check"></i>
           <span>Threat Intelligence</span>
         </button>
         <button class="nav-item" data-nav="whitelist">
-          <i data-lucide="check-circle-2"></i>
+          <i data-lucide="circle-check"></i>
           <span>Whitelist</span>
         </button>
         <button class="nav-item" data-nav="api-keys">
@@ -69,17 +69,6 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div class="company-badge-card">
-          <div class="company-icon-box">
-            <i data-lucide="shield" class="company-logo-svg"></i>
-          </div>
-          <div class="company-text">
-            <span class="company-name">MNCS</span>
-            <span class="company-sub">MNC Cyber Security Pvt. Ltd.</span>
-            <span class="enterprise-tag">Enterprise</span>
-          </div>
-        </div>
-        
         <div class="system-status-indicator">
           <span class="status-dot-pulse"></span>
           <div class="status-texts">
@@ -118,13 +107,13 @@
         <div class="top-header-actions">
           <button class="icon-action-btn notification-btn" title="Alerts & Notifications" id="btn-notifications">
             <i data-lucide="bell"></i>
-            <span class="badge-count">3</span>
+            <span class="badge-count" id="header-notif-count">0</span>
           </button>
           <button class="icon-action-btn" title="Documentation & Help" id="btn-help">
             <i data-lucide="help-circle"></i>
           </button>
-          <div class="user-avatar" title="Analyst User: MN">
-            <span>MN</span>
+          <div class="user-avatar" title="Security Analyst">
+            <span>TS</span>
           </div>
         </div>
       </header>
@@ -135,21 +124,21 @@
         <!-- ================= VIEW 1: DASHBOARD (MAIN VIEW) ================= -->
         <section id="view-dashboard" class="app-view active">
           
-          <!-- 1. KPI Stats Metric Cards Row (5 Cards) -->
+          <!-- 1. KPI Stats Metric Cards Row (5 Cards) - Dynamic real-time values -->
           <div class="kpi-grid">
             
             <!-- KPI 1: Total Scans -->
             <div class="kpi-card">
               <div class="kpi-meta">
                 <span class="kpi-title">Total Scans</span>
-                <h3 class="kpi-value" id="kpi-total-scans">42,587</h3>
-                <span class="kpi-trend trend-cyan">
-                  <i data-lucide="trending-up"></i> 12.4% from last 7 days
+                <h3 class="kpi-value" id="kpi-total-scans">0</h3>
+                <span class="kpi-trend trend-cyan" id="kpi-trend-total">
+                  <i data-lucide="trending-up"></i> <span id="trend-txt-total">Live Real-time</span>
                 </span>
               </div>
               <div class="kpi-sparkline">
                 <svg viewBox="0 0 100 40" class="sparkline-svg sparkline-cyan">
-                  <path d="M0,35 Q15,30 30,22 T60,18 T85,10 T100,5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <path id="sparkline-path-total" d="M0,35 L20,35 L40,35 L60,35 L80,35 L100,35" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
               </div>
             </div>
@@ -158,14 +147,14 @@
             <div class="kpi-card">
               <div class="kpi-meta">
                 <span class="kpi-title">Malicious Detections</span>
-                <h3 class="kpi-value value-red" id="kpi-malicious-scans">3,481</h3>
-                <span class="kpi-trend trend-red">
-                  <i data-lucide="trending-up"></i> 8.7% from last 7 days
+                <h3 class="kpi-value value-red" id="kpi-malicious-scans">0</h3>
+                <span class="kpi-trend trend-red" id="kpi-trend-mal">
+                  <i data-lucide="trending-up"></i> <span id="trend-txt-mal">Active Threat Rate</span>
                 </span>
               </div>
               <div class="kpi-sparkline">
                 <svg viewBox="0 0 100 40" class="sparkline-svg sparkline-red">
-                  <path d="M0,30 Q20,38 40,25 T70,15 T100,8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <path id="sparkline-path-mal" d="M0,35 L20,35 L40,35 L60,35 L80,35 L100,35" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
               </div>
             </div>
@@ -174,14 +163,14 @@
             <div class="kpi-card">
               <div class="kpi-meta">
                 <span class="kpi-title">Suspicious Detections</span>
-                <h3 class="kpi-value value-orange" id="kpi-suspicious-scans">6,214</h3>
-                <span class="kpi-trend trend-orange">
-                  <i data-lucide="trending-up"></i> 5.3% from last 7 days
+                <h3 class="kpi-value value-orange" id="kpi-suspicious-scans">0</h3>
+                <span class="kpi-trend trend-orange" id="kpi-trend-susp">
+                  <i data-lucide="trending-up"></i> <span id="trend-txt-susp">Heuristic Flags</span>
                 </span>
               </div>
               <div class="kpi-sparkline">
                 <svg viewBox="0 0 100 40" class="sparkline-svg sparkline-orange">
-                  <path d="M0,28 Q25,35 50,20 T75,22 T100,10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <path id="sparkline-path-susp" d="M0,35 L20,35 L40,35 L60,35 L80,35 L100,35" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
               </div>
             </div>
@@ -190,14 +179,14 @@
             <div class="kpi-card">
               <div class="kpi-meta">
                 <span class="kpi-title">Clean Detections</span>
-                <h3 class="kpi-value value-green" id="kpi-clean-scans">32,892</h3>
-                <span class="kpi-trend trend-green">
-                  <i data-lucide="trending-up"></i> 14.6% from last 7 days
+                <h3 class="kpi-value value-green" id="kpi-clean-scans">0</h3>
+                <span class="kpi-trend trend-green" id="kpi-trend-clean">
+                  <i data-lucide="trending-up"></i> <span id="trend-txt-clean">Benign Verified</span>
                 </span>
               </div>
               <div class="kpi-sparkline">
                 <svg viewBox="0 0 100 40" class="sparkline-svg sparkline-green">
-                  <path d="M0,35 Q30,28 60,15 T90,8 T100,4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <path id="sparkline-path-clean" d="M0,35 L20,35 L40,35 L60,35 L80,35 L100,35" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
               </div>
             </div>
@@ -206,14 +195,14 @@
             <div class="kpi-card">
               <div class="kpi-meta">
                 <span class="kpi-title">Avg. Confidence Score</span>
-                <h3 class="kpi-value" id="kpi-avg-score">76 <span class="kpi-sub">/100</span></h3>
-                <span class="kpi-trend trend-purple">
-                  <i data-lucide="trending-up"></i> 3.1% from last 7 days
+                <h3 class="kpi-value" id="kpi-avg-score">0 <span class="kpi-sub">/100</span></h3>
+                <span class="kpi-trend trend-purple" id="kpi-trend-score">
+                  <i data-lucide="trending-up"></i> <span id="trend-txt-score">Aggregated Mean</span>
                 </span>
               </div>
               <div class="kpi-sparkline">
                 <svg viewBox="0 0 100 40" class="sparkline-svg sparkline-purple">
-                  <path d="M0,25 Q20,10 45,30 T75,12 T100,8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                  <path id="sparkline-path-score" d="M0,35 L20,35 L40,35 L60,35 L80,35 L100,35" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
               </div>
             </div>
@@ -235,7 +224,7 @@
                   <input 
                     type="text" 
                     id="dashboard-ioc-input" 
-                    placeholder="e.g. https://malicious-site.com, 192.168.1.1, sample@phish.com, 44d88612fea8a8f36..." 
+                    placeholder="e.g. https://malicious-site.com, 185.220.101.5, sample@phish.com, 275a021bbfb..." 
                     autocomplete="off" 
                     spellcheck="false"
                   />
@@ -255,8 +244,8 @@
                 <!-- Supported Tags Pill List -->
                 <div class="supported-pills-row">
                   <span class="supported-label">Supported:</span>
-                  <button type="button" class="type-pill" data-sample="https://malicious-site.com/login.php">URL</button>
-                  <button type="button" class="type-pill" data-sample="bad-actor-phish.xyz">Domain</button>
+                  <button type="button" class="type-pill" data-sample="https://verify-login-portal.security-update.xyz/auth">URL</button>
+                  <button type="button" class="type-pill" data-sample="newly-registered-phish.site">Domain</button>
                   <button type="button" class="type-pill" data-sample="185.220.101.5">IPv4</button>
                   <button type="button" class="type-pill" data-sample="2001:db8::1">IPv6</button>
                   <button type="button" class="type-pill" data-sample="275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f">Hash (MD5, SHA1, SHA256)</button>
@@ -292,31 +281,35 @@
             <div class="glass-card result-panel-card">
               <div class="panel-header-row">
                 <h2>Latest Scan Result</h2>
+                <button type="button" class="btn-secondary btn-sm" id="btn-latest-download-report" title="Download Threat Report">
+                  <i data-lucide="download"></i>
+                  <span>Report</span>
+                </button>
               </div>
 
               <div class="latest-result-body" id="latest-result-body">
                 <!-- Top Indicator Title & Score -->
                 <div class="latest-result-top">
-                  <div class="verdict-tag-pill tag-malicious" id="latest-verdict-tag">MALICIOUS</div>
+                  <div class="verdict-tag-pill tag-clean" id="latest-verdict-tag">READY</div>
                   <div class="latest-ioc-title-box">
                     <div class="ioc-heading-row">
-                      <strong class="latest-ioc-string" id="latest-ioc-text">https://malicious-site.com/login.php</strong>
+                      <strong class="latest-ioc-string" id="latest-ioc-text">No scans performed yet</strong>
                       <button class="btn-inline-copy" id="btn-copy-latest-ioc" title="Copy Indicator"><i data-lucide="copy"></i></button>
                     </div>
-                    <span class="latest-ioc-sub" id="latest-ioc-meta">URL • Scanned just now</span>
+                    <span class="latest-ioc-sub" id="latest-ioc-meta">Enter an IOC above to begin analysis</span>
                   </div>
                   <div class="latest-score-dial">
                     <div class="score-dial-text">
                       <span class="dial-label">Confidence Score</span>
                       <div class="dial-numbers">
-                        <span class="dial-main-num score-red" id="latest-score-number">92</span>
+                        <span class="dial-main-num score-green" id="latest-score-number">0</span>
                         <span class="dial-max">/100</span>
                       </div>
                     </div>
                     <div class="score-ring-mini">
-                      <svg viewBox="0 0 36 36" class="circular-chart red">
+                      <svg viewBox="0 0 36 36" class="circular-chart green">
                         <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                        <path class="circle" id="latest-ring-circle" stroke-dasharray="92, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path class="circle" id="latest-ring-circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
                       </svg>
                     </div>
                   </div>
@@ -325,7 +318,7 @@
                 <!-- Executive Summary -->
                 <div class="latest-summary-section">
                   <span class="section-label">Summary</span>
-                  <p id="latest-summary-text">This URL is detected as malicious by multiple security vendors. It is associated with phishing activities and credential theft.</p>
+                  <p id="latest-summary-text">Ready to scan. Submit a URL, IP, Domain, Hash, or Email to query active threat intelligence feeds.</p>
                 </div>
 
                 <!-- 4 Quick Stats Badges Grid -->
@@ -334,28 +327,28 @@
                     <i data-lucide="calendar"></i>
                     <div>
                       <span class="stat-lbl">Scan Date</span>
-                      <strong class="stat-val" id="latest-stat-date">May 21, 2025 10:24 AM</strong>
+                      <strong class="stat-val" id="latest-stat-date">—</strong>
                     </div>
                   </div>
                   <div class="stat-badge-item">
                     <i data-lucide="shield"></i>
                     <div>
                       <span class="stat-lbl">Sources</span>
-                      <strong class="stat-val text-green" id="latest-stat-sources">12 / 18</strong>
+                      <strong class="stat-val text-green" id="latest-stat-sources">0 / 6</strong>
                     </div>
                   </div>
                   <div class="stat-badge-item">
                     <i data-lucide="crosshair"></i>
                     <div>
                       <span class="stat-lbl">Detections</span>
-                      <strong class="stat-val text-red" id="latest-stat-detections">11</strong>
+                      <strong class="stat-val text-muted" id="latest-stat-detections">0</strong>
                     </div>
                   </div>
                   <div class="stat-badge-item">
                     <i data-lucide="alert-triangle"></i>
                     <div>
                       <span class="stat-lbl">Verdict</span>
-                      <strong class="stat-val text-red" id="latest-stat-verdict">Malicious</strong>
+                      <strong class="stat-val text-muted" id="latest-stat-verdict">—</strong>
                     </div>
                   </div>
                 </div>
@@ -365,19 +358,13 @@
                   <div class="factors-col">
                     <span class="section-label">Risk Factors</span>
                     <ul class="bullet-list" id="latest-factors-list">
-                      <li>• Detected as phishing site</li>
-                      <li>• Contains malicious redirects</li>
-                      <li>• Domain age is very recent (2 days)</li>
-                      <li>• Low reputation score</li>
+                      <li>• Awaiting scan execution</li>
                     </ul>
                   </div>
                   <div class="tags-col">
                     <span class="section-label">Tags</span>
                     <div class="tags-cloud" id="latest-tags-list">
-                      <span class="pill-tag">phishing</span>
-                      <span class="pill-tag">credential-theft</span>
-                      <span class="pill-tag">malware-distribution</span>
-                      <span class="pill-tag pill-tag-more">+2</span>
+                      <span class="pill-tag">idle</span>
                     </div>
                   </div>
                 </div>
@@ -399,116 +386,47 @@
               </div>
 
               <div class="sources-list" id="dashboard-sources-list">
-                <!-- Source Row 1: VirusTotal -->
                 <div class="source-row">
                   <div class="source-info">
-                    <div class="source-icon-box vt-icon">
-                      <i data-lucide="shield"></i>
-                    </div>
+                    <div class="source-icon-box"><i data-lucide="shield"></i></div>
                     <span class="source-name">VirusTotal</span>
                   </div>
-                  <div class="source-verdict-right">
-                    <span class="badge-source-verdict tag-malicious">Malicious</span>
-                    <i data-lucide="chevron-right"></i>
-                  </div>
+                  <div class="source-verdict-right"><span class="badge-source-verdict tag-clean">Ready</span><i data-lucide="chevron-right"></i></div>
                 </div>
-
-                <!-- Source Row 2: Google Safe Browsing -->
                 <div class="source-row">
                   <div class="source-info">
-                    <div class="source-icon-box gsb-icon">
-                      <i data-lucide="globe"></i>
-                    </div>
+                    <div class="source-icon-box"><i data-lucide="globe"></i></div>
                     <span class="source-name">Google Safe Browsing</span>
                   </div>
-                  <div class="source-verdict-right">
-                    <span class="badge-source-verdict tag-malicious">Malicious</span>
-                    <i data-lucide="chevron-right"></i>
-                  </div>
+                  <div class="source-verdict-right"><span class="badge-source-verdict tag-clean">Ready</span><i data-lucide="chevron-right"></i></div>
                 </div>
-
-                <!-- Source Row 3: URLScan.io -->
                 <div class="source-row">
                   <div class="source-info">
-                    <div class="source-icon-box urlscan-icon">
-                      <i data-lucide="external-link"></i>
-                    </div>
+                    <div class="source-icon-box"><i data-lucide="external-link"></i></div>
                     <span class="source-name">URLScan.io</span>
                   </div>
-                  <div class="source-verdict-right">
-                    <span class="badge-source-verdict tag-malicious">Malicious</span>
-                    <i data-lucide="chevron-right"></i>
-                  </div>
+                  <div class="source-verdict-right"><span class="badge-source-verdict tag-clean">Ready</span><i data-lucide="chevron-right"></i></div>
                 </div>
-
-                <!-- Source Row 4: PhishTank / MalwareBazaar -->
                 <div class="source-row">
                   <div class="source-info">
-                    <div class="source-icon-box phish-icon">
-                      <i data-lucide="anchor"></i>
-                    </div>
+                    <div class="source-icon-box"><i data-lucide="anchor"></i></div>
                     <span class="source-name">MalwareBazaar / PhishTank</span>
                   </div>
-                  <div class="source-verdict-right">
-                    <span class="badge-source-verdict tag-malicious">Malicious</span>
-                    <i data-lucide="chevron-right"></i>
-                  </div>
+                  <div class="source-verdict-right"><span class="badge-source-verdict tag-clean">Ready</span><i data-lucide="chevron-right"></i></div>
                 </div>
-
-                <!-- Source Row 5: AbuseIPDB -->
                 <div class="source-row">
                   <div class="source-info">
-                    <div class="source-icon-box abuse-icon">
-                      <i data-lucide="database"></i>
-                    </div>
+                    <div class="source-icon-box"><i data-lucide="database"></i></div>
                     <span class="source-name">AbuseIPDB</span>
                   </div>
-                  <div class="source-verdict-right">
-                    <span class="badge-source-verdict tag-clean">Clean</span>
-                    <i data-lucide="chevron-right"></i>
-                  </div>
+                  <div class="source-verdict-right"><span class="badge-source-verdict tag-clean">Ready</span><i data-lucide="chevron-right"></i></div>
                 </div>
-
-                <!-- Source Row 6: GreyNoise -->
                 <div class="source-row">
                   <div class="source-info">
-                    <div class="source-icon-box gn-icon">
-                      <i data-lucide="radio"></i>
-                    </div>
-                    <span class="source-name">GreyNoise</span>
+                    <div class="source-icon-box"><i data-lucide="info"></i></div>
+                    <span class="source-name">Domain Age (WHOIS/RDAP)</span>
                   </div>
-                  <div class="source-verdict-right">
-                    <span class="badge-source-verdict tag-clean">Clean</span>
-                    <i data-lucide="chevron-right"></i>
-                  </div>
-                </div>
-
-                <!-- Source Row 7: Shodan -->
-                <div class="source-row">
-                  <div class="source-info">
-                    <div class="source-icon-box shodan-icon">
-                      <i data-lucide="eye"></i>
-                    </div>
-                    <span class="source-name">Shodan</span>
-                  </div>
-                  <div class="source-verdict-right">
-                    <span class="badge-source-verdict tag-suspicious">Suspicious</span>
-                    <i data-lucide="chevron-right"></i>
-                  </div>
-                </div>
-
-                <!-- Source Row 8: Domain Age (WHOIS/RDAP) -->
-                <div class="source-row">
-                  <div class="source-info">
-                    <div class="source-icon-box whois-icon">
-                      <i data-lucide="info"></i>
-                    </div>
-                    <span class="source-name">Domain Age (WHOIS)</span>
-                  </div>
-                  <div class="source-verdict-right">
-                    <span class="badge-source-verdict tag-suspicious">Suspicious</span>
-                    <i data-lucide="chevron-right"></i>
-                  </div>
+                  <div class="source-verdict-right"><span class="badge-source-verdict tag-clean">Ready</span><i data-lucide="chevron-right"></i></div>
                 </div>
               </div>
 
@@ -533,16 +451,12 @@
                   <div class="donut-svg-container">
                     <svg viewBox="0 0 160 160" class="donut-svg">
                       <circle cx="80" cy="80" r="62" class="donut-bg-ring"></circle>
-                      <!-- Multi-colored Donut Segments -->
-                      <circle cx="80" cy="80" r="62" class="donut-seg-red" stroke-dasharray="160 230" stroke-dashoffset="0"></circle>
-                      <circle cx="80" cy="80" r="62" class="donut-seg-orange" stroke-dasharray="90 300" stroke-dashoffset="-165"></circle>
-                      <circle cx="80" cy="80" r="62" class="donut-seg-yellow" stroke-dasharray="55 335" stroke-dashoffset="-260"></circle>
-                      <circle cx="80" cy="80" r="62" class="donut-seg-green" stroke-dasharray="35 355" stroke-dashoffset="-320"></circle>
+                      <circle cx="80" cy="80" r="62" class="donut-seg-green" stroke-dasharray="0 390" stroke-dashoffset="0"></circle>
                     </svg>
                     <div class="donut-center-content">
-                      <span class="donut-big-num" id="donut-score-val">92</span>
+                      <span class="donut-big-num" id="donut-score-val">0</span>
                       <span class="donut-sub-num">/100</span>
-                      <span class="donut-risk-pill" id="donut-risk-label">High Risk</span>
+                      <span class="donut-risk-pill" id="donut-risk-label" style="color:var(--color-green);">NO RISK</span>
                     </div>
                   </div>
 
@@ -551,27 +465,27 @@
                     <div class="legend-row">
                       <span class="legend-dot dot-red"></span>
                       <span class="legend-name">Vendor Detections</span>
-                      <strong class="legend-pct">45%</strong>
+                      <strong class="legend-pct" id="donut-pct-vendor">0%</strong>
                     </div>
                     <div class="legend-row">
                       <span class="legend-dot dot-orange"></span>
                       <span class="legend-name">Content Analysis</span>
-                      <strong class="legend-pct">25%</strong>
+                      <strong class="legend-pct" id="donut-pct-content">0%</strong>
                     </div>
                     <div class="legend-row">
                       <span class="legend-dot dot-yellow"></span>
                       <span class="legend-name">Reputation</span>
-                      <strong class="legend-pct">15%</strong>
+                      <strong class="legend-pct" id="donut-pct-rep">0%</strong>
                     </div>
                     <div class="legend-row">
                       <span class="legend-dot dot-green"></span>
                       <span class="legend-name">Domain Insights</span>
-                      <strong class="legend-pct">10%</strong>
+                      <strong class="legend-pct" id="donut-pct-domain">0%</strong>
                     </div>
                     <div class="legend-row">
                       <span class="legend-dot dot-slate"></span>
                       <span class="legend-name">Other Factors</span>
-                      <strong class="legend-pct">5%</strong>
+                      <strong class="legend-pct" id="donut-pct-other">0%</strong>
                     </div>
                   </div>
                 </div>
@@ -579,11 +493,9 @@
                 <!-- Analyst Recommendations Section -->
                 <div class="recommendations-box">
                   <span class="section-label">Recommendations</span>
-                  <ul class="bullet-list-red">
-                    <li>• Do not visit this URL</li>
-                    <li>• Block this URL in your security tools</li>
-                    <li>• Check for indicators of compromise in your environment</li>
-                    <li>• Monitor for any related activity</li>
+                  <ul class="bullet-list-red" id="latest-recs-list">
+                    <li>• Ready to scan indicators.</li>
+                    <li>• Results and mitigation steps will generate here in real-time.</li>
                   </ul>
                 </div>
               </div>
@@ -611,66 +523,8 @@
                   </tr>
                 </thead>
                 <tbody id="recent-scans-tbody">
-                  <!-- Injected dynamically / populated with active & recent logs -->
                   <tr>
-                    <td><code>https://malicious-site.com/login.php</code></td>
-                    <td><span class="type-cell-tag">URL</span></td>
-                    <td><span class="badge-source-verdict tag-malicious">Malicious</span></td>
-                    <td><strong class="score-num-cell score-red">92</strong></td>
-                    <td><span class="sources-count-cell">12 / 18</span></td>
-                    <td><span class="time-cell">2 minutes ago</span></td>
-                    <td class="text-right actions-cell">
-                      <button class="btn-table-action" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
-                      <button class="btn-table-action" title="Export Report"><i data-lucide="file-text"></i></button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><code>192.168.1.100</code></td>
-                    <td><span class="type-cell-tag">IPv4</span></td>
-                    <td><span class="badge-source-verdict tag-suspicious">Suspicious</span></td>
-                    <td><strong class="score-num-cell score-orange">65</strong></td>
-                    <td><span class="sources-count-cell">8 / 15</span></td>
-                    <td><span class="time-cell">15 minutes ago</span></td>
-                    <td class="text-right actions-cell">
-                      <button class="btn-table-action" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
-                      <button class="btn-table-action" title="Export Report"><i data-lucide="file-text"></i></button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><code>44d88612fea8a8f36de82e1278abb02f</code></td>
-                    <td><span class="type-cell-tag">MD5</span></td>
-                    <td><span class="badge-source-verdict tag-clean">Clean</span></td>
-                    <td><strong class="score-num-cell score-green">10</strong></td>
-                    <td><span class="sources-count-cell">6 / 18</span></td>
-                    <td><span class="time-cell">1 hour ago</span></td>
-                    <td class="text-right actions-cell">
-                      <button class="btn-table-action" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
-                      <button class="btn-table-action" title="Export Report"><i data-lucide="file-text"></i></button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><code>invoice-update@secure-pay.com</code></td>
-                    <td><span class="type-cell-tag">Email</span></td>
-                    <td><span class="badge-source-verdict tag-malicious">Malicious</span></td>
-                    <td><strong class="score-num-cell score-red">88</strong></td>
-                    <td><span class="sources-count-cell">14 / 20</span></td>
-                    <td><span class="time-cell">2 hours ago</span></td>
-                    <td class="text-right actions-cell">
-                      <button class="btn-table-action" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
-                      <button class="btn-table-action" title="Export Report"><i data-lucide="file-text"></i></button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><code>example-domain.net</code></td>
-                    <td><span class="type-cell-tag">Domain</span></td>
-                    <td><span class="badge-source-verdict tag-suspicious">Suspicious</span></td>
-                    <td><strong class="score-num-cell score-orange">58</strong></td>
-                    <td><span class="sources-count-cell">9 / 16</span></td>
-                    <td><span class="time-cell">3 hours ago</span></td>
-                    <td class="text-right actions-cell">
-                      <button class="btn-table-action" title="Inspect Scan Details"><i data-lucide="eye"></i></button>
-                      <button class="btn-table-action" title="Export Report"><i data-lucide="file-text"></i></button>
-                    </td>
+                    <td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">No scans recorded yet. Enter an IOC above to run your first threat intelligence scan.</td>
                   </tr>
                 </tbody>
               </table>
@@ -687,10 +541,47 @@
 
         </section>
 
-        <!-- ================= VIEW 2: FULL SCAN & DEEP REPORT ================= -->
+        <!-- ================= VIEW 2: REPORTS & GENERATOR VIEW ================= -->
+        <section id="view-reports" class="app-view">
+          <div class="view-header-title">
+            <h2>Threat Intelligence Report Generator</h2>
+            <p>Generate, preview, and download formal threat analysis reports for any scanned indicator.</p>
+          </div>
+
+          <div class="glass-card report-generator-card">
+            <div class="report-controls-bar">
+              <div class="report-select-group">
+                <label for="report-select-scan">Select Scan Record:</label>
+                <select id="report-select-scan" class="form-select">
+                  <option value="">-- Select a completed scan --</option>
+                </select>
+              </div>
+              <div class="report-actions-group">
+                <button type="button" class="btn-scan-main" id="btn-download-pdf-report">
+                  <i data-lucide="printer"></i>
+                  <span>Download / Print PDF</span>
+                </button>
+                <button type="button" class="btn-secondary" id="btn-export-json-report">
+                  <i data-lucide="code"></i>
+                  <span>Export JSON</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Live Report Preview Frame -->
+            <div class="report-preview-container" id="report-preview-container">
+              <div class="report-empty-state">
+                <i data-lucide="file-search"></i>
+                <p>Select a scan above or perform a new scan to generate a downloadable Threat Intelligence Report.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= VIEW 3: FULL SCAN & DEEP REPORT ================= -->
         <section id="view-scan" class="app-view">
           <div class="view-header-title">
-            <h2>Detailed Threat Intelligence Report</h2>
+            <h2>Detailed Threat Intelligence Breakdown</h2>
             <p>Full breakdown of external engine responses, behavioral indicators, and cryptographic validations.</p>
           </div>
 
@@ -699,7 +590,7 @@
           </div>
         </section>
 
-        <!-- ================= VIEW 3: BULK MULTI-IOC ================= -->
+        <!-- ================= VIEW 4: BULK MULTI-IOC ================= -->
         <section id="view-bulk-scan" class="app-view">
           <div class="view-header-title">
             <h2>Bulk Multi-IOC Scanner</h2>
@@ -760,7 +651,7 @@
           </div>
         </section>
 
-        <!-- ================= VIEW 4: HISTORY AUDIT LOG ================= -->
+        <!-- ================= VIEW 5: HISTORY AUDIT LOG ================= -->
         <section id="view-history" class="app-view">
           <div class="view-header-title">
             <h2>Scan History & Audit Logs</h2>
@@ -819,7 +710,7 @@
           </div>
         </section>
 
-        <!-- ================= VIEW 5: THREAT INTEL & API KEYS ================= -->
+        <!-- ================= VIEW 6: THREAT INTEL ================= -->
         <section id="view-intel" class="app-view">
           <div class="view-header-title">
             <h2>Active Threat Intelligence Sources</h2>
@@ -831,7 +722,7 @@
           </div>
         </section>
 
-        <!-- ================= VIEW 6: WHITELIST ================= -->
+        <!-- ================= VIEW 7: WHITELIST ================= -->
         <section id="view-whitelist" class="app-view">
           <div class="view-header-title">
             <h2>Organization Whitelist</h2>
@@ -842,7 +733,7 @@
           </div>
         </section>
 
-        <!-- ================= VIEW 7: API INTEGRATIONS ================= -->
+        <!-- ================= VIEW 8: API INTEGRATIONS ================= -->
         <section id="view-api-keys" class="app-view">
           <div class="view-header-title">
             <h2>Threat Intelligence API Integrations</h2>

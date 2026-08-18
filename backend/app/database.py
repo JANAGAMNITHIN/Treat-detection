@@ -1,31 +1,39 @@
 import json
-import uuid
 from datetime import datetime, timedelta
 from typing import AsyncGenerator, List, Optional, Tuple
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy import select, desc, func, delete
+from uuid import uuid4
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import select, desc, delete, func, or_
 
 from app.config import settings
 from app.models.db_models import Base, ScanRecord, ApiKeyStorage
-from app.models.schemas import ScanResponse, Verdict, RiskLevel, IOCType
+from app.models.schemas import ScanResponse
 
+# Async Database Engine
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=settings.DEBUG,
+    echo=False,
     future=True,
+    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {}
 )
 
+# Async Session Factory
 async_session_factory = async_sessionmaker(
-    engine,
+    bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
 )
 
 async def init_db():
+    """Initializes SQLite tables."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency yielding an async database session."""
     async with async_session_factory() as session:
         try:
             yield session
@@ -33,29 +41,23 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 async def get_cached_scan(session: AsyncSession, indicator: str) -> Optional[ScanRecord]:
-    """Retrieve an active cached scan if not expired."""
+    """Retrieves a cached scan if it exists and has not expired."""
     now = datetime.utcnow()
     query = (
         select(ScanRecord)
         .where(ScanRecord.indicator == indicator)
         .where(ScanRecord.expires_at > now)
-        .order_by(desc(ScanRecord.scanned_at))
-        .limit(1)
     )
     result = await session.execute(query)
     return result.scalar_one_or_none()
 
-async def save_scan_record(
-    session: AsyncSession,
-    response: ScanResponse,
-    ttl_hours: int = 24
-) -> Optional[ScanRecord]:
-    """Save or update scan record in SQLite."""
+async def save_scan_record(session: AsyncSession, response: ScanResponse, ttl_hours: int = 24) -> Optional[ScanRecord]:
+    """Saves or updates a scan response in SQLite."""
     now = datetime.utcnow()
     expires_at = now + timedelta(hours=ttl_hours)
-    record_id = response.id or str(uuid.uuid4())
-    
-    breakdown_json = json.dumps([f.model_dump() for f in response.scoring_breakdown])
+    record_id = response.id or str(uuid4())
+
+    breakdown_json = json.dumps([b.model_dump() for b in response.scoring_breakdown])
     sources_json = json.dumps([s.model_dump() for s in response.sources])
     raw_data_json = json.dumps(response.raw_data or {})
     email_json = json.dumps(response.email_analysis.model_dump()) if response.email_analysis else None
@@ -66,6 +68,7 @@ async def save_scan_record(
         existing = result.scalar_one_or_none()
 
         if existing:
+            existing.id = record_id
             existing.defanged_indicator = response.defanged_indicator
             existing.ioc_type = response.type.value if hasattr(response.type, "value") else response.type
             existing.verdict = response.verdict.value if hasattr(response.verdict, "value") else response.verdict
@@ -133,7 +136,14 @@ async def get_scan_history(
     return list(records), total
 
 async def get_scan_by_id(session: AsyncSession, scan_id: str) -> Optional[ScanRecord]:
-    query = select(ScanRecord).where(ScanRecord.id == scan_id)
+    """Get single scan record by ID or indicator."""
+    query = select(ScanRecord).where(
+        or_(
+            ScanRecord.id == scan_id,
+            ScanRecord.indicator == scan_id,
+            ScanRecord.defanged_indicator == scan_id,
+        )
+    )
     result = await session.execute(query)
     return result.scalar_one_or_none()
 

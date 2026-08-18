@@ -14,6 +14,20 @@ async def test_health_endpoint():
         assert data["app_name"] == "ThreatScope"
 
 @pytest.mark.asyncio
+async def test_stats_endpoint():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/api/stats")
+        assert response.status_code == 200
+        data = response.json()
+        assert "total" in data
+        assert "malicious" in data
+        assert "suspicious" in data
+        assert "clean" in data
+        assert "avg_score" in data
+        assert "trend_scores" in data
+
+@pytest.mark.asyncio
 async def test_classify_endpoint():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -32,7 +46,7 @@ async def test_classify_endpoint():
         assert data["ioc_type"] == "md5"
 
 @pytest.mark.asyncio
-async def test_scan_single_ioc_endpoint():
+async def test_scan_single_ioc_and_report_download():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post("/api/scan", json={"indicator": "8.8.8.8", "force_refresh": True})
@@ -43,6 +57,13 @@ async def test_scan_single_ioc_endpoint():
         assert "verdict" in data
         assert "confidence_score" in data
         assert len(data["sources"]) > 0
+
+        # Report download test
+        scan_id = data["id"]
+        report_res = await client.get(f"/api/reports/{scan_id}/download")
+        assert report_res.status_code == 200
+        assert "THREATSCOPE THREAT INTELLIGENCE REPORT" in report_res.text
+        assert data["defanged_indicator"] in report_res.text
 
 @pytest.mark.asyncio
 async def test_bulk_scan_endpoint():
