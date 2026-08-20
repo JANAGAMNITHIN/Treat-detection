@@ -4,6 +4,7 @@ from datetime import datetime
 import io
 import time
 from typing import List, Optional
+import uuid
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse, HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,7 +33,9 @@ from app.models.schemas import (
     RiskLevel,
     ScanRequest,
     ScanResponse,
+    ScoringFactor,
     SettingsResponse,
+    SourceResult,
     UpdateKeysRequest,
     Verdict,
 )
@@ -119,6 +122,7 @@ async def scan_single_ioc(
             sources = [
                 SourceResult(
                     name="AbuseIPDB",
+                    ioc_type=clf.ioc_type,
                     verdict=Verdict.CLEAN,
                     confidence_score=0.0,
                     summary="Private RFC1918 / Internal IP space. Not routable on the public internet; 0 external abuse reports.",
@@ -127,6 +131,7 @@ async def scan_single_ioc(
                 ),
                 SourceResult(
                     name="VirusTotal",
+                    ioc_type=clf.ioc_type,
                     verdict=Verdict.CLEAN,
                     confidence_score=0.0,
                     summary="Private / Loopback Address Space. 0/72 security engines flag internal address.",
@@ -135,6 +140,7 @@ async def scan_single_ioc(
                 ),
                 SourceResult(
                     name="WHOIS / RDAP",
+                    ioc_type=clf.ioc_type,
                     verdict=Verdict.CLEAN,
                     confidence_score=0.0,
                     summary=f"IANA Special Purpose / Private Network Space ({reason}).",
@@ -143,6 +149,7 @@ async def scan_single_ioc(
                 ),
                 SourceResult(
                     name="Security Policy Boundary",
+                    ioc_type=clf.ioc_type,
                     verdict=Verdict.CLEAN,
                     confidence_score=0.0,
                     summary="Internal network asset identified. Outbound web crawler probing restricted by SSRF guard.",
@@ -179,6 +186,7 @@ async def scan_single_ioc(
             sources = [
                 SourceResult(
                     name="Security Policy Boundary",
+                    ioc_type=clf.ioc_type,
                     verdict=Verdict.SUSPICIOUS,
                     confidence_score=35.0,
                     summary=f"SSRF Policy Guard: Target '{clf.normalized}' addresses restricted internal/metadata infrastructure ({reason}). Outbound crawling blocked.",
@@ -187,6 +195,7 @@ async def scan_single_ioc(
                 ),
                 SourceResult(
                     name="VirusTotal",
+                    ioc_type=clf.ioc_type,
                     verdict=Verdict.CLEAN,
                     confidence_score=0.0,
                     summary="Internal/Localhost destination.",

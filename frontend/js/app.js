@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initReportsView();
   initBulkView();
   initHistoryView();
+  initWhitelistView();
   initApiIntegrationsView();
   initSettingsView();
   
@@ -1762,7 +1763,64 @@ function loadIntelPage() {
   initIcons();
 }
 
-/* ================= 17. TOAST HELPER ================= */
+/* ================= 17. WHITELIST VIEW ================= */
+function initWhitelistView() {
+  const form = document.getElementById('whitelist-add-form');
+  const typeSelect = document.getElementById('whitelist-input-type');
+  const valInput = document.getElementById('whitelist-input-value');
+  const reasonInput = document.getElementById('whitelist-input-reason');
+  const tbody = document.getElementById('whitelist-tbody');
+  const countBadge = document.getElementById('whitelist-count-badge');
+
+  if (form && valInput && tbody) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = valInput.value.trim();
+      const type = typeSelect ? typeSelect.value.toUpperCase() : 'DOMAIN';
+      const reason = reasonInput && reasonInput.value.trim() ? reasonInput.value.trim() : 'Manual Security Exception';
+
+      if (!val) return;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><code>${escapeHtml(val)}</code></td>
+        <td><span class="type-cell-tag">${type}</span></td>
+        <td>${escapeHtml(reason)}</td>
+        <td><span class="badge-source-verdict tag-clean">TRUSTED</span></td>
+        <td class="text-right"><button class="btn-danger btn-sm btn-del-wl" data-val="${escapeHtml(val)}">Remove</button></td>
+      `;
+      tbody.appendChild(tr);
+
+      valInput.value = '';
+      if (reasonInput) reasonInput.value = '';
+
+      if (countBadge) {
+        countBadge.textContent = `${tbody.children.length} active entries`;
+      }
+
+      tr.querySelector('.btn-del-wl').addEventListener('click', () => {
+        tr.remove();
+        if (countBadge) countBadge.textContent = `${tbody.children.length} active entries`;
+        showToast('Whitelist entry removed', 'success');
+      });
+
+      showToast(`Added ${val} to organization whitelist`, 'success');
+    });
+
+    document.querySelectorAll('.btn-del-wl').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const row = e.currentTarget.closest('tr');
+        if (row) {
+          row.remove();
+          if (countBadge) countBadge.textContent = `${tbody.children.length} active entries`;
+          showToast('Whitelist entry removed', 'success');
+        }
+      });
+    });
+  }
+}
+
+/* ================= 18. TOAST HELPER ================= */
 function showToast(msg, type = 'success') {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -1782,4 +1840,5 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
 

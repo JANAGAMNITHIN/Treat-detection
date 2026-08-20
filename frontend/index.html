@@ -815,11 +815,77 @@
         <!-- ================= VIEW 7: WHITELIST ================= -->
         <section id="view-whitelist" class="app-view">
           <div class="view-header-title">
-            <h2>Organization Whitelist</h2>
-            <p>Trusted internal IP ranges, corporate domains, and verified benign file hashes.</p>
+            <h2>Organization Whitelist & Safe Indicators</h2>
+            <p>Trusted internal IP ranges, enterprise corporate domains, and verified benign file hashes.</p>
           </div>
-          <div class="glass-card whitelist-card">
-            <p class="text-muted">No custom whitelist overrides configured. All indicators are evaluated directly against active intelligence engines and SSRF safety boundaries.</p>
+
+          <div class="glass-card whitelist-card" style="display:flex;flex-direction:column;gap:1.5rem;">
+            <!-- Add Whitelist Form -->
+            <div class="panel-header-row" style="margin-bottom:0;">
+              <h2>Add Whitelist Exception</h2>
+            </div>
+            <form id="whitelist-add-form" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+              <select id="whitelist-input-type" class="form-select" style="min-width:140px;">
+                <option value="domain">Domain</option>
+                <option value="ipv4">IP / CIDR</option>
+                <option value="url">URL Prefix</option>
+                <option value="sha256">SHA-256 Hash</option>
+              </select>
+              <input type="text" id="whitelist-input-value" placeholder="e.g. *.internal-corp.net or 10.0.0.0/8" class="form-input" style="flex:1;min-width:260px;" required />
+              <input type="text" id="whitelist-input-reason" placeholder="Reason (e.g. Internal Auth Gateway)" class="form-input" style="flex:1;min-width:200px;" />
+              <button type="submit" class="btn-scan-main btn-sm" id="btn-add-whitelist">
+                <i data-lucide="plus"></i> Add Entry
+              </button>
+            </form>
+
+            <!-- Whitelist Table -->
+            <div class="panel-header-row" style="margin-bottom:0;margin-top:1rem;">
+              <h2>Configured Whitelist Rules</h2>
+              <span class="text-muted" style="font-size:0.8rem;" id="whitelist-count-badge">4 active entries</span>
+            </div>
+            <div class="table-responsive">
+              <table class="soc-data-table" id="whitelist-table">
+                <thead>
+                  <tr>
+                    <th>Indicator / Pattern</th>
+                    <th>Type</th>
+                    <th>Reason / Justification</th>
+                    <th>Status</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="whitelist-tbody">
+                  <tr>
+                    <td><code>*.google.com</code></td>
+                    <td><span class="type-cell-tag">DOMAIN</span></td>
+                    <td>Verified Search & Cloud Infrastructure</td>
+                    <td><span class="badge-source-verdict tag-clean">TRUSTED</span></td>
+                    <td class="text-right"><button class="btn-danger btn-sm btn-del-wl" data-val="*.google.com">Remove</button></td>
+                  </tr>
+                  <tr>
+                    <td><code>*.microsoft.com</code></td>
+                    <td><span class="type-cell-tag">DOMAIN</span></td>
+                    <td>Enterprise Azure & Office365 Endpoints</td>
+                    <td><span class="badge-source-verdict tag-clean">TRUSTED</span></td>
+                    <td class="text-right"><button class="btn-danger btn-sm btn-del-wl" data-val="*.microsoft.com">Remove</button></td>
+                  </tr>
+                  <tr>
+                    <td><code>10.0.0.0/8</code></td>
+                    <td><span class="type-cell-tag">CIDR / IP</span></td>
+                    <td>Corporate RFC1918 Private Subnet</td>
+                    <td><span class="badge-source-verdict tag-clean">INTERNAL</span></td>
+                    <td class="text-right"><button class="btn-danger btn-sm btn-del-wl" data-val="10.0.0.0/8">Remove</button></td>
+                  </tr>
+                  <tr>
+                    <td><code>192.168.0.0/16</code></td>
+                    <td><span class="type-cell-tag">CIDR / IP</span></td>
+                    <td>Local Branch Office LAN Network</td>
+                    <td><span class="badge-source-verdict tag-clean">INTERNAL</span></td>
+                    <td class="text-right"><button class="btn-danger btn-sm btn-del-wl" data-val="192.168.0.0/16">Remove</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 

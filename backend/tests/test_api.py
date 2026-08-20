@@ -90,3 +90,36 @@ async def test_settings_endpoint():
         data = response.json()
         assert "keys" in data
         assert len(data["keys"]) >= 5
+
+        # Test app settings
+        app_res = await client.get("/api/settings/app")
+        assert app_res.status_code == 200
+        assert "cache_ttl_hours" in app_res.json()
+
+        # Test test-key endpoint
+        test_key_res = await client.post("/api/settings/test-key", json={"provider": "virustotal", "key": "a"*64})
+        assert test_key_res.status_code == 200
+        assert test_key_res.json()["status"] == "connected"
+
+@pytest.mark.asyncio
+async def test_private_ip_and_ssrf_url_scan():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Test private RFC1918 IP
+        priv_res = await client.post("/api/scan", json={"indicator": "192.168.1.1", "force_refresh": True})
+        assert priv_res.status_code == 200
+        priv_data = priv_res.json()
+        assert priv_data["verdict"] == "clean"
+        assert priv_data["confidence_score"] == 0.0
+        assert len(priv_data["sources"]) > 0
+
+        # Test loopback IP
+        loop_res = await client.post("/api/scan", json={"indicator": "127.0.0.1", "force_refresh": True})
+        assert loop_res.status_code == 200
+        assert loop_res.json()["verdict"] == "clean"
+
+        # Test localhost URL
+        url_res = await client.post("/api/scan", json={"indicator": "http://localhost:8000/admin", "force_refresh": True})
+        assert url_res.status_code == 200
+        assert url_res.json()["verdict"] == "suspicious"
+
